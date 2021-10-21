@@ -80,17 +80,32 @@ TimerQueue::TimerQueue(EventLoop *loop)
   timerfdChannel_.enableReading();
 }
 
-// 添加新的到期任务
+/// 创建新的 timer 定时任务，然后调用 EventLoop 的 runInLoop
+/// 这样，当调用方不是 IO 线程的时候现在可以将这个工作移动到 IO 线程中了，就不会产生错误
+/// addTimer 是线程安全的，并且不需要加锁
 void TimerQueue::addTimer(const TimerCallback &cb, Timestamp when,
                           double interval) {
-  std::unique_ptr timer = std::make_unique<Timer>(cb, when, interval);
+  // std::unique_ptr<Timer> timer = std::make_unique<Timer>(cb, when, interval);
+  // loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, std::move(timer)));
+
+  loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, cb, when, interval));
+}
+/// addTimer 的实际工作，只能在 IO 线程中做
+void TimerQueue::addTimerInLoop(const TimerCallback &cb, Timestamp when, double interval) {
+  // 本来这个函数的参数应该是 unique_ptr 的右值引用的，后来这里为了 std::bind 能够绑定改为了左值引用
+  // 虽然这样看着有点丑陋，但是没有什么问题，下面该 move 还是可以放心的 move
+  // 因为该函数只会被调用一次，move 之后 std::bind 绑定的对象中的 timer 就无效了
+  // 但是最后因为编译错误，这里直接改成了 Timer 构造函数的参数。错误原因在于 std::bind 转化为 std::functor 构造的时候出错
+
   loop_->assertInLoopThread();
+  std::unique_ptr timer = std::make_unique<Timer>(cb, when, interval);
+  auto expiration = timer->expiration();
   bool earliestChanged = insert(std::move(timer));
   // 之后不应该再使用 timer 这个变量
 
   if (earliestChanged) {
     // 设置定时事件
-    resetTimerfd(timerfd_, when);
+    resetTimerfd(timerfd_, expiration);
   }
 }
 
@@ -143,7 +158,7 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
 
     // 其实这样也不会有什么大问题，因为 std::set
     // 中的元素等下就要直接删除的，只是开销大了一些
-    auto &up = it->second;
+    auto &up = itera->second;
     expired.push_back(std::make_pair(
         it->first, std::make_unique<imitate_muduo::Timer>(
                        up->callback(), up->expiration(), up->interval())));

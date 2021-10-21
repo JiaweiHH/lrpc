@@ -25,6 +25,8 @@ public:
   using TimerCallback = std::function<void()>;
 
 private:
+  // void addTimerInLoop(std::unique_ptr<Timer> &timer);
+  void addTimerInLoop(const TimerCallback &cb, Timestamp when, double interval);
   // 当 timerfd 可读的时候调用
   void handleRead();
 
