@@ -1,5 +1,5 @@
-BINARIES = test7
-LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc
+BINARIES = test8
+LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../TcpServer.cc
 
 CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -DBOOST_LOG_DYN_LINK -I..
 LDFLAGS = -lpthread -lboost_log
@@ -16,6 +16,7 @@ test4: test4.cc
 test5: test5.cc
 test6: test6.cc
 test7: test7.cc
+test8: test8.cc
 
 clean:
 	rm -rf $(BINARIES) core

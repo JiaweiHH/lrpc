@@ -106,6 +106,12 @@ void EventLoop::updateChannel(Channel *channel) {
   poller_->updateChannel(channel);
 }
 
+void EventLoop::removeChannel(Channel *channel) {
+  assert(channel->ownerLoop() == this);
+  assertInLoopThread();
+  poller_->removeChannel(channel);
+}
+
 /// 下面三个函数分别让用户选择：
 /// 1. 在某一个时间点执行回调
 /// 2. 在某一个延迟时间之后执行回调

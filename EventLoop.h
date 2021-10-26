@@ -68,6 +68,8 @@ public:
 
   // 更新 EventLoop 关心的文件描述符事件
   void updateChannel(Channel *channel);
+  // 移除 channel
+  void removeChannel(Channel* channel);
 
   // 断言
   void assertInLoopThread() {

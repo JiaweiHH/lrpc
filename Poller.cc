@@ -65,13 +65,12 @@ void Poller::updateChannel(Channel *channel) {
     // 设置关心的 IO 事件
     pfd.events = static_cast<short>(channel->events());
     pfd.revents = 0;
-
+    pollfds_.push_back(pfd);
     // 设置 channel 编号
     int idx = static_cast<int>(pollfds_.size()) - 1;
     channel->set_index(idx);
 
     // 创建映射
-    pollfds_.push_back(pfd);
     channels_[pfd.fd] = channel;
   }
   // 更新一个已经存在的
@@ -87,14 +86,40 @@ void Poller::updateChannel(Channel *channel) {
     assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
 
     struct pollfd &pfd = pollfds_[idx];
+    BOOST_LOG_TRIVIAL(trace) << "pfd.fd = " << pfd.fd << ", channel->fd() = " << channel->fd() << "\n";
     // -1 相当于不监听这个文件描述符
-    assert(pfd.fd == channel->fd() || pfd.fd == -1);
+    assert(pfd.fd == channel->fd() || pfd.fd == -channel->fd() - 1);
 
     // 确保上述断言没有异常之后就可以更新
     pfd.events = static_cast<short>(channel->events());
     pfd.revents = 0;
     if (channel->isNoneEvent()) {
-      pfd.fd = -1;
+      pfd.fd = -channel->fd() - 1;
     }
+  }
+}
+
+void Poller::removeChannel(Channel *channel) {
+  assertInLoopThread();
+  BOOST_LOG_TRIVIAL(trace) << "fd = " << channel->fd();
+  assert(channels_.find(channel->fd()) != channels_.end());
+  assert(channels_[channel->fd()] == channel);
+  assert(channel->isNoneEvent());
+
+  int idx = channel->index();
+  assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
+  const struct pollfd &pfd = pollfds_[idx];
+  assert(pfd.fd == -channel->fd() - 1 && pfd.events == channel->events());
+  size_t n = channels_.erase(channel->fd());
+  assert(n == 1);
+  if (idx == pollfds_.size() - 1) {
+    pollfds_.pop_back();
+  } else {
+    int channelAtEnd = pollfds_.size() - 1;
+    std::iter_swap(pollfds_.begin() + idx, pollfds_.end() - 1);
+    if (channelAtEnd < 0)
+      channelAtEnd = -channelAtEnd - 1;
+    channels_[channelAtEnd]->set_index(idx);
+    pollfds_.pop_back();
   }
 }

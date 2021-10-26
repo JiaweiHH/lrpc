@@ -33,6 +33,7 @@ public:
   std::chrono::steady_clock::time_point poll(int timeoutMS, std::vector<Channel *> &activeChannels);
 
   void updateChannel(Channel *channel);
+  void removeChannel(Channel* channel);
 
   void assertInLoopThread() {
     ownerloop_->assertInLoopThread();

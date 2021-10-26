@@ -22,21 +22,27 @@ private:
   int events_;  // Channel 关心的 IO 事件
   int revents_; // 目前活动的事件
   int index_;   // 被 Poller 使用
+
+  bool eventHanding_;
+
   // 事件回调函数
   EventCallback readCallback_;
   EventCallback writeCallback_;
   EventCallback errorCallback_;
+  EventCallback closeCallback_;
 
 public:
   Channel(const Channel &) = delete;
   Channel &operator=(const Channel &) = delete;
   Channel(EventLoop *loop, int fd);
+  ~Channel();
 
   void handleEvent();
 
   void setReadCallback(const EventCallback &cb) { readCallback_ = cb; }
   void setWriteCallback(const EventCallback &cb) { writeCallback_ = cb; }
   void setErrorCallback(const EventCallback &cb) { errorCallback_ = cb; }
+  void setCloseCallback(const EventCallback &cb) { closeCallback_ = cb; }
 
   int fd() const { return fd_; }
   int events() const { return events_; }
@@ -46,6 +52,12 @@ public:
   // 在这里会更新 EventLoop 关心的文件描述符以及其上发生的 IO 事件
   void enableReading() {
     events_ |= kReadEvent;
+    update();
+  }
+
+  /// 取消一个文件描述符的所有事件
+  void disableAll() {
+    events_ = kNoneEvent;
     update();
   }
 
