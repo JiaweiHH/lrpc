@@ -37,7 +37,7 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &nameArg,
       localAddr_(localAddr), peerAddr_(peerAddr) {
   BOOST_LOG_TRIVIAL(debug) << "TcpConnection::ctor[" << name_ << "] at" << this
                            << " fd = " << sockfd;
-  channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this));
+  channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
   channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
   channel_->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
   channel_->setErrorCallback(std::bind(&TcpConnection::handleError, this));
@@ -73,15 +73,19 @@ void TcpConnection::connectDestoryed() {
   loop_->removeChannel(channel_.get());
 }
 
-void TcpConnection::handleRead() {
-  char buf[65536];
-  ssize_t n = ::read(channel_->fd(), buf, sizeof buf);
-  if (n > 0) {}
-    // messageCallback_(shared_from_this(), buf, n);
-  else if (n == 0)
+/// 客户端有新的数据发送过来，服务端的 client socket 可读
+void TcpConnection::handleRead(Timestamp recieveTime) {
+  int savedErrno = 0;
+  ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
+  if (n > 0) {
+    messageCallback_(shared_from_this(), &inputBuffer_, recieveTime);
+  } else if (n == 0) {
     handleClose();
-  else
+  } else {
+    errno = savedErrno;
+    BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleRead";
     handleError();
+  }
 }
 
 void TcpConnection::handleWrite() {}

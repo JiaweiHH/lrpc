@@ -1,5 +1,5 @@
-BINARIES = test3
-LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../TcpServer.cc
+BINARIES = test8
+LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../TcpServer.cc ../Buffer.cc
 
 CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -DBOOST_LOG_DYN_LINK -I..
 LDFLAGS = -lpthread -lboost_log

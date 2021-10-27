@@ -1,6 +1,7 @@
 #ifndef IMITATE_MUDUO_TCPCONNECTION_H
 #define IMITATE_MUDUO_TCPCONNECTION_H
 
+#include "Buffer.h"
 #include "Callback.h"
 #include "InetAddress.h"
 #include <memory>
@@ -24,7 +25,7 @@ private:
 
   void setState(StateE s) { state_ = s; }
 
-  void handleRead();
+  void handleRead(Timestamp);
   void handleWrite();
   void handleClose();
   void handleError();
@@ -39,6 +40,7 @@ private:
   ConnectionCallback connectionCallback_;
   MessageCallback messageCallback_;
   CloseCallback closeCallback_;
+  Buffer inputBuffer_;
 
 public:
   TcpConnection(const TcpConnection &) = delete;
