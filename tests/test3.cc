@@ -5,11 +5,13 @@
 #include <stdio.h>
 #include <iostream>
 #include <cstring>
+#include <string>
 
 imitate_muduo::EventLoop *g_loop;
 
-void timeout() {
-  std::cout << "Timeout!\n";
+void timeout(imitate_muduo::Timestamp recieveTime) {
+  time_t time = std::chrono::system_clock::to_time_t(recieveTime);
+  std::cout << ctime(&time) << " Timeout!\n";
   g_loop->quit();
 }
 

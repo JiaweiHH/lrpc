@@ -1,6 +1,7 @@
 #ifndef IMITATE_MUDUO_CHANNEL_H
 #define IMITATE_MUDUO_CHANNEL_H
 
+#include "Callback.h"
 #include <functional>
 
 namespace imitate_muduo {
@@ -9,8 +10,11 @@ class EventLoop;
 
 /// Channel 负责一个 fd 的事件分发
 class Channel {
+public:
   // TODO 貌似 std::function 的性能不如 lambda，考虑这里能不能优化一下
   using EventCallback = std::function<void()>; // 事件回调类型
+  using ReadEventCallback = std::function<void(Timestamp)>;
+
 private:
   void update();
   static const int kNoneEvent;
@@ -26,7 +30,7 @@ private:
   bool eventHanding_;
 
   // 事件回调函数
-  EventCallback readCallback_;
+  ReadEventCallback readCallback_;
   EventCallback writeCallback_;
   EventCallback errorCallback_;
   EventCallback closeCallback_;
@@ -37,9 +41,9 @@ public:
   Channel(EventLoop *loop, int fd);
   ~Channel();
 
-  void handleEvent();
+  void handleEvent(Timestamp);
 
-  void setReadCallback(const EventCallback &cb) { readCallback_ = cb; }
+  void setReadCallback(const ReadEventCallback &cb) { readCallback_ = cb; }
   void setWriteCallback(const EventCallback &cb) { writeCallback_ = cb; }
   void setErrorCallback(const EventCallback &cb) { errorCallback_ = cb; }
   void setCloseCallback(const EventCallback &cb) { closeCallback_ = cb; }

@@ -11,11 +11,11 @@ Poller::Poller(EventLoop *loop) : ownerloop_(loop) {}
 
 // poll 是 Poller 的核心函数，负责调用 poll(2) 获取当前活动的 IO 事件
 // 并填充调用方传入的 activeChannels，activeChannels 一开始是空的
-// @return poll(2) 返回的时刻，这里使用 steady_clock 这个稳定时钟
-std::chrono::steady_clock::time_point Poller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
+// @return poll(2) 返回的时刻，这里使用 system_clock 这个稳定时钟
+std::chrono::system_clock::time_point Poller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
   // poll(2) 系统调用返回发生事件的文件描述符数量
   int numEvents = ::poll(&*pollfds_.begin(), pollfds_.size(), timeoutMs);
-  auto now = std::chrono::steady_clock::now();
+  auto now = std::chrono::system_clock::now();
   if (numEvents > 0) {
     BOOST_LOG_TRIVIAL(trace) << numEvents << " events happened";
     fillActiveChannels(numEvents, activeChannels);

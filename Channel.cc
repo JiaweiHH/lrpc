@@ -20,7 +20,7 @@ Channel::~Channel() {
 
 void Channel::update() { loop_->updateChannel(this); }
 
-void Channel::handleEvent() {
+void Channel::handleEvent(Timestamp recieveTime) {
   eventHanding_ = true;
   // 指定的文件描述符非法
   if (revents_ & POLLNVAL) {
@@ -41,7 +41,7 @@ void Channel::handleEvent() {
   // 有数据可读 或 有紧急数据可读 或 指定的文件描述符挂起事件
   if (revents_ & (POLLIN | POLLPRI | POLLRDHUP)) {
     if (readCallback_)
-      readCallback_();
+      readCallback_(recieveTime);
   }
   // 写数据不会导致阻塞
   if (revents_ & POLLOUT) {

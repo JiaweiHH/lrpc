@@ -76,8 +76,8 @@ void TcpConnection::connectDestoryed() {
 void TcpConnection::handleRead() {
   char buf[65536];
   ssize_t n = ::read(channel_->fd(), buf, sizeof buf);
-  if (n > 0)
-    messageCallback_(shared_from_this(), buf, n);
+  if (n > 0) {}
+    // messageCallback_(shared_from_this(), buf, n);
   else if (n == 0)
     handleClose();
   else

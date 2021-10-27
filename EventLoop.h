@@ -24,7 +24,7 @@ private:
   bool callingPendingFunctors_;
 
   std::thread::id threadId_; // EventLoop 所属线程编号
-  std::chrono::steady_clock::time_point pollReturnTime_;  // 记录上一次 Poller::poll 返回的时间
+  std::chrono::system_clock::time_point pollReturnTime_;  // 记录上一次 Poller::poll 返回的时间
   std::unique_ptr<Poller> poller_;         // 执行 IO mutilplexing
   std::unique_ptr<TimerQueue> timerQueue_; // TimerQueue
   int wakeupFd_;  // eventfd，用来唤醒 IO 线程
@@ -48,7 +48,7 @@ public:
 
   void quit();
 
-  std::chrono::steady_clock::time_point pollReturnTime() const {
+  std::chrono::system_clock::time_point pollReturnTime() const {
     return pollReturnTime_;
   }
 
@@ -61,7 +61,7 @@ public:
 
   void wakeup();
 
-  void runAt(const std::chrono::steady_clock::time_point &time,
+  void runAt(const std::chrono::system_clock::time_point &time,
              const TimerCallback &cb);
   void runAfter(double delay, const TimerCallback &cb);
   void runEvery(double interval, const TimerCallback &cb);

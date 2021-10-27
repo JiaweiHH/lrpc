@@ -1,16 +1,12 @@
 #ifndef IMITATE_MUDUO_TIMER_H
 #define IMITATE_MUDUO_TIMER_H
 
-#include <chrono>
+#include "Callback.h"
 #include <functional>
 
 namespace imitate_muduo {
 
 class Timer {
-public:
-  using TimerCallback = std::function<void()>;
-  using Timestamp = std::chrono::steady_clock::time_point;
-
 private:
   const TimerCallback callback_;
   Timestamp expiration_;  // 到期时间点

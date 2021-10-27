@@ -11,7 +11,10 @@ namespace imitate_muduo {
 
 namespace detail {
 
-using steady_time = std::chrono::steady_clock::time_point;
+std::string translate_time(std::chrono::system_clock::time_point now) {
+  time_t time = std::chrono::system_clock::to_time_t(now);
+  return ctime(&time);
+}
 
 // 创建 timerfd 文件描述符
 int createTimerfd() {
@@ -23,18 +26,18 @@ int createTimerfd() {
 }
 
 // 获取当前时间到 when 的时间差
-std::chrono::microseconds howMuchTimeFromNow(steady_time when) {
+std::chrono::microseconds howMuchTimeFromNow(Timestamp when) {
   return std::chrono::duration_cast<std::chrono::microseconds>(
-      when - std::chrono::steady_clock::now());
+      when - std::chrono::system_clock::now());
 }
 
 // 读取 timerfd 文件描述符
-void readTimerfd(int timerfd, steady_time now) {
+void readTimerfd(int timerfd, Timestamp now) {
   uint64_t howmany;
   // 读取 timerfd 返回超时次数
   // 当 timerfd 是阻塞式的时候则 read 操作将阻塞，否则返回 EAGAIN
   ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-  BOOST_LOG_TRIVIAL(trace) << "TimerQueue::handleRead() " << howmany << " at ";
+  BOOST_LOG_TRIVIAL(trace) << "TimerQueue::handleRead() " << howmany << " at " << translate_time(now);
   //  << now;
   if (n != sizeof howmany) {
     BOOST_LOG_TRIVIAL(error)
@@ -43,7 +46,7 @@ void readTimerfd(int timerfd, steady_time now) {
 }
 
 // 设置 timerfd 定时事件
-void resetTimerfd(int timerfd, steady_time expiration) {
+void resetTimerfd(int timerfd, Timestamp expiration) {
   // 首先获取到期时间点和现在的时间差
   auto value = howMuchTimeFromNow(expiration);
   // BOOST_LOG_TRIVIAL(trace) << value.count();
@@ -125,7 +128,7 @@ bool TimerQueue::insert(std::unique_ptr<Timer> &&timer) {
 // 处理到期的 Timer
 void TimerQueue::handleRead() {
   loop_->assertInLoopThread();
-  Timestamp now(std::chrono::steady_clock::now());
+  Timestamp now(std::chrono::system_clock::now());
   readTimerfd(timerfd_, now);
 
   // 获取到期的 Timers

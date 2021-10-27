@@ -20,7 +20,7 @@ class TimerId;
 /// TimerQueue 的成员函数只会在其所属的 IO 线程中调用，因此不需要加锁
 class TimerQueue {
 public:
-  using Timestamp = std::chrono::steady_clock::time_point;
+  using Timestamp = std::chrono::system_clock::time_point;
   using Entry = std::pair<Timestamp, std::unique_ptr<Timer>>;
   using TimerCallback = std::function<void()>;
 

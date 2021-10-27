@@ -30,7 +30,7 @@ public:
   Poller(EventLoop *loop);
   ~Poller() = default;
 
-  std::chrono::steady_clock::time_point poll(int timeoutMS, std::vector<Channel *> &activeChannels);
+  std::chrono::system_clock::time_point poll(int timeoutMS, std::vector<Channel *> &activeChannels);
 
   void updateChannel(Channel *channel);
   void removeChannel(Channel* channel);
