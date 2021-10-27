@@ -58,12 +58,22 @@ public:
     events_ |= kReadEvent;
     update();
   }
-
+  void enableWriting() {
+    events_ |= kWriteEvent;
+    update();
+  }
+  void disableWriting() {
+    events_ &= ~kWriteEvent;
+    update();
+  }
   /// 取消一个文件描述符的所有事件
   void disableAll() {
     events_ = kNoneEvent;
     update();
   }
+
+  /// 当在关注 write 事件可用的时候说明有数据等待发送
+  bool isWriting() const { return events_ & kWriteEvent; }
 
   int index() const { return index_; }
   void set_index(int idx) { index_ = idx; }

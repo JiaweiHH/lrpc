@@ -64,7 +64,7 @@ void TcpConnection::connecEstablished() {
 /// 由 TcpServer 调用, 取消 client socket 上的所有回调，并从 EventLoop 中移除
 void TcpConnection::connectDestoryed() {
   loop_->assertInLoopThread();
-  assert(state_ == StateE::kConnected);
+  assert(state_ == StateE::kConnected || state_ == StateE::kDisConnecting);
   setState(StateE::kDisConnected);
   // client 断开链接，所以取消 client socket 上的所有事件
   channel_->disableAll();
@@ -88,12 +88,34 @@ void TcpConnection::handleRead(Timestamp recieveTime) {
   }
 }
 
-void TcpConnection::handleWrite() {}
+/// Channel 变的可写的时候会调用 TcpConnection::handleWrite
+/// 发送 ouputBuffer_ 中的数据
+/// 一旦数据发送完毕就立刻停止观察 writable 事件，避免 busy loop
+void TcpConnection::handleWrite() {
+  loop_->assertInLoopThread();
+  if (channel_->isWriting()) {
+    ssize_t n = ::write(channel_->fd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
+    if (n > 0) {
+      outputBuffer_.retrieve(n);
+      if (outputBuffer_.readableBytes() == 0) {
+        channel_->disableWriting();
+        if (state_ == StateE::kDisConnecting)
+          shutdownInLoop();
+      } else {
+        BOOST_LOG_TRIVIAL(trace) << "I am going to write more data";
+      }
+    } else {
+      BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleWrite";
+    }
+  } else {
+    BOOST_LOG_TRIVIAL(trace) << "Connection is down, no more writing";
+  }
+}
 
 void TcpConnection::handleClose() {
   loop_->assertInLoopThread();
   BOOST_LOG_TRIVIAL(trace) << "TcpConnection::handleClose state = " << stateEnumToStr(state_);
-  assert(state_ == StateE::kConnected);
+  assert(state_ == StateE::kConnected || state_ == StateE::kDisConnecting);
   channel_->disableAll();
   // closeCallback_ 绑定到 TcpServer::removeConnection
   closeCallback_(shared_from_this());
@@ -105,4 +127,59 @@ void TcpConnection::handleError() {
   BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleError [" << name_
                            << "] - SO_ERROR = " << err << " "
                            << strerror_r(err, t_errnobuf, sizeof t_errnobuf);
+}
+
+/// 关闭 client sockets 的写
+void TcpConnection::shutdown() {
+  if (state_ == StateE::kConnected) {
+    setState(StateE::kDisConnecting);
+    loop_->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
+  }
+}
+void TcpConnection::shutdownInLoop() {
+  loop_->assertInLoopThread();
+  if (!channel_->isWriting())
+    socket_->shutdownWrite();
+}
+
+/// 发送数据
+/// 如果在非 IO 线程调用，会把 message 复制一份传递给 IO 线程中的 sendInLoop 来发送
+void TcpConnection::send(const std::string &message) {
+  if (state_ == StateE::kConnected) {
+    if (loop_->isInLoopThread()) {
+      sendInLoop(message);
+    } else {
+      // message 会被移动到 std::bind 对象的成员变量中
+      loop_->runInLoop(std::bind(&TcpConnection::sendInLoop, this, std::move(message)));
+    }
+  }
+}
+void TcpConnection::sendInLoop(const std::string &message) {
+  loop_->assertInLoopThread();
+  ssize_t nwrote = 0;
+  // 如果没有等待发送的数据，尝试直接发送数据
+  if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0) {
+    nwrote = ::write(channel_->fd(), message.data(), message.size());
+    if (nwrote >= 0) {
+      // 数据没有发送完全
+      if (static_cast<size_t>(nwrote) < message.size()) {
+        BOOST_LOG_TRIVIAL(trace) << "I am going to write more data";
+      }
+    } else {
+      nwrote = 0;
+      if (errno != EWOULDBLOCK) {
+        BOOST_LOG_TRIVIAL(error) << "TcpConnection::sendInLoop";
+      }
+    }
+  }
+
+  assert(nwrote >= 0);
+  // 数据没有发送完全，则先放到 outputBuffer_ 中，并监听 write 事件
+  // 当 socket 变得可写的时候 Channel 会调用 TcpConnection::handleWrite()
+  if (static_cast<size_t>(nwrote) < message.size()) {
+    outputBuffer_.append(message.data() + nwrote, message.size() - nwrote);
+    if (!channel_->isWriting()) {
+      channel_->enableWriting();
+    }
+  }
 }

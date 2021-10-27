@@ -22,6 +22,8 @@ public:
 
   // Enable/Disable SO_REUSEADDR
   void setReuseAddr(bool on);
+
+  void shutdownWrite();
 };
 
 } // namespace imitate_muduo

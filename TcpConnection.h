@@ -20,6 +20,7 @@ private:
   enum class StateE {
     kConnecting,
     kConnected,
+    kDisConnecting,
     kDisConnected,
   };
 
@@ -29,6 +30,9 @@ private:
   void handleWrite();
   void handleClose();
   void handleError();
+  
+  void sendInLoop(const std::string &message);
+  void shutdownInLoop();
 
   EventLoop *loop_;
   std::string name_;
@@ -41,6 +45,7 @@ private:
   MessageCallback messageCallback_;
   CloseCallback closeCallback_;
   Buffer inputBuffer_;
+  Buffer outputBuffer_;
 
 public:
   TcpConnection(const TcpConnection &) = delete;
@@ -49,12 +54,18 @@ public:
                 const InetAddress &localAddr, const InetAddress &peerAddr);
   ~TcpConnection();
 
+  /// 获取成员变量
   EventLoop *getLoop() const { return loop_; }
   const std::string &name() const { return name_; }
   const InetAddress &localAddress() { return localAddr_; }
   const InetAddress &peerAddress() { return peerAddr_; }
   bool connected() const { return state_ == StateE::kConnected; }
 
+  /// 这两个函数都是线程安全的
+  void send(const std::string &message);
+  void shutdown();
+
+  /// 设置回调函数
   void setConnectionCallback(const ConnectionCallback &cb) {
     connectionCallback_ = cb;
   }
