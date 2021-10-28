@@ -22,13 +22,15 @@ void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
   conn->send(buf->retrieveAsString());
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   printf("main(): pid = %d\n", getpid());
   imitate_muduo::InetAddress listenAddr(9981);
   imitate_muduo::EventLoop loop;
   imitate_muduo::TcpServer server(&loop, listenAddr);
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
+  if (argc > 1)
+    server.setThreadNum(atoi(argv[1]));
   server.start();
   loop.loop();
 }

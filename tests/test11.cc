@@ -30,7 +30,7 @@ void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
   buf->retrieveAll();
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   printf("main(): pid = %d\n", getpid());
   std::string line;
   for(int i = 33; i < 127; ++i) {
@@ -46,7 +46,9 @@ int main() {
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
   server.setWriteCompleteCallback(onWriteComplete);
-
+  if (argc > 1) {
+    server.setThreadNum(atoi(argv[1]));
+  }
   server.start();
   loop.loop();
 }

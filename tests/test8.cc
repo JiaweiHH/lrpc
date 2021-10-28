@@ -1,6 +1,7 @@
 #include "../EventLoop.h"
 #include "../InetAddress.h"
 #include "../TcpServer.h"
+#include "../EventLoopThreadPool.h"
 #include <cstdio>
 #include <unistd.h>
 
@@ -22,13 +23,15 @@ void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
   printf("onMessage(): [%s]\n", buf->retrieveAsString().c_str());
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   printf("main(): pid = %d\n", getpid());
   imitate_muduo::InetAddress listenAddr(9981);
   imitate_muduo::EventLoop loop;
   imitate_muduo::TcpServer server(&loop, listenAddr);
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
+  if (argc > 1)
+    server.setThreadNum(atoi(argv[1]));
   server.start();
   loop.loop();
 }
