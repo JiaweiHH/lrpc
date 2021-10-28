@@ -24,6 +24,7 @@ public:
   void setReuseAddr(bool on);
 
   void shutdownWrite();
+  void setTcpNoDelay(bool on);
 };
 
 } // namespace imitate_muduo

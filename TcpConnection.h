@@ -43,6 +43,7 @@ private:
   InetAddress peerAddr_;
   ConnectionCallback connectionCallback_;
   MessageCallback messageCallback_;
+  WriteCompleteCallback writeCompleteCallback_;
   CloseCallback closeCallback_;
   Buffer inputBuffer_;
   Buffer outputBuffer_;
@@ -64,6 +65,7 @@ public:
   /// 这两个函数都是线程安全的
   void send(const std::string &message);
   void shutdown();
+  void setTcpNoDelay(bool on); // 禁用 Nagle 算法，避免连续发包出现延迟
 
   /// 设置回调函数
   void setConnectionCallback(const ConnectionCallback &cb) {
@@ -71,6 +73,7 @@ public:
   }
   void setMessageCallback(const MessageCallback &cb) { messageCallback_ = cb; }
   void setCloseCallback(const CloseCallback &cb) { closeCallback_ = cb; }
+  void setWriteCompleteCallback(const WriteCompleteCallback &cb) { writeCompleteCallback_ = cb; };
 
   void connecEstablished(); // 连接建立
   void connectDestoryed();  // 连接断开

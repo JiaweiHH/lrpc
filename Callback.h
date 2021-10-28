@@ -20,6 +20,7 @@ using ConnectionCallback = std::function<void(const TcpConnectionPtr &)>;
 using MessageCallback =
     std::function<void(const TcpConnectionPtr &, Buffer *, Timestamp)>;
 using CloseCallback = std::function<void(const TcpConnectionPtr &)>;
+using WriteCompleteCallback = std::function<void(const TcpConnectionPtr &)>;
 
 } // namespace imitate_muduo
 

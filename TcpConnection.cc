@@ -99,6 +99,9 @@ void TcpConnection::handleWrite() {
       outputBuffer_.retrieve(n);
       if (outputBuffer_.readableBytes() == 0) {
         channel_->disableWriting();
+        if (writeCompleteCallback_) {
+          loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
+        }
         if (state_ == StateE::kDisConnecting)
           shutdownInLoop();
       } else {
@@ -164,6 +167,8 @@ void TcpConnection::sendInLoop(const std::string &message) {
       // 数据没有发送完全
       if (static_cast<size_t>(nwrote) < message.size()) {
         BOOST_LOG_TRIVIAL(trace) << "I am going to write more data";
+      } else if (writeCompleteCallback_) {
+        loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
       }
     } else {
       nwrote = 0;
@@ -182,4 +187,8 @@ void TcpConnection::sendInLoop(const std::string &message) {
       channel_->enableWriting();
     }
   }
+}
+
+void TcpConnection::setTcpNoDelay(bool on) {
+  socket_->setTcpNoDelay(on);
 }

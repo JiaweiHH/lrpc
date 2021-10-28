@@ -2,6 +2,7 @@
 #include "Channel.h"
 #include "Poller.h"
 #include "TimerQueue.h"
+#include "signal.h"
 
 #include <assert.h>
 #include <boost/log/trivial.hpp>
@@ -23,6 +24,17 @@ static int createEventfd() {
   }
   return evtfd;
 }
+
+/// 用来处理在客户端断开连接之后继续发送数据，导致服务器出错的情况
+/// 在构造函数中忽略 SIGPIPE 信号
+/// !@param SIGPIPE write on a pipe with no reader
+class IgnoreSigPipe {
+public:
+  IgnoreSigPipe() {
+    ::signal(SIGPIPE, SIG_IGN);
+  }
+};
+IgnoreSigPipe initObj;
 
 /// @param interval 时间间隔，单位是秒
 static std::chrono::system_clock::time_point

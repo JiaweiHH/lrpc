@@ -22,6 +22,7 @@ private:
   std::unique_ptr<Acceptor> acceptor_;
   ConnectionCallback connectionCallback_;
   MessageCallback messageCallback_;
+  WriteCompleteCallback writeCompleteCallback_;
   bool started_;
   int nextConnId_;
   std::map<std::string, TcpConnectionPtr> connections_;
@@ -37,6 +38,9 @@ public:
     connectionCallback_ = cb;
   }
   void setMessageCallback(const MessageCallback &cb) { messageCallback_ = cb; }
+  void setWriteCompleteCallback(const WriteCompleteCallback &cb) {
+    writeCompleteCallback_ = cb;
+  }
 };
 
 } // namespace imitate_muduo

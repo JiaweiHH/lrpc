@@ -1,4 +1,4 @@
-BINARIES = test10
+BINARIES = test11
 LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../TcpServer.cc ../Buffer.cc
 
 CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -DBOOST_LOG_DYN_LINK -I..
@@ -19,6 +19,7 @@ test7: test7.cc
 test8: test8.cc
 test9: test9.cc
 test10: test10.cc
+test11: test11.cc
 
 clean:
 	rm -rf $(BINARIES) core
