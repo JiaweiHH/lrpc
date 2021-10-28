@@ -12,6 +12,7 @@ namespace imitate_muduo {
 class Channel;
 class Poller;
 class TimerQueue;
+class Epoller;
 
 class EventLoop {
 public:
