@@ -24,20 +24,20 @@ void onWriteComplete(const imitate_muduo::TcpConnectionPtr &conn) {
 void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
                imitate_muduo::Buffer *buf,
                imitate_muduo::Timestamp recieveTime) {
-  time_t time = std::chrono::system_clock::to_time_t(recieveTime);
   printf("onMessage(): recieved %zd bytes from connection [%s] at %s\n",
-         buf->readableBytes(), conn->name().c_str(), ctime(&time));
+         buf->readableBytes(), conn->name().c_str(),
+         recieveTime.toFormattedString().c_str());
   buf->retrieveAll();
 }
 
 int main(int argc, char *argv[]) {
   printf("main(): pid = %d\n", getpid());
   std::string line;
-  for(int i = 33; i < 127; ++i) {
+  for (int i = 33; i < 127; ++i) {
     line.push_back(char(i));
   }
   line += line;
-  for(size_t i = 0; i < 127 - 33; ++i) {
+  for (size_t i = 0; i < 127 - 33; ++i) {
     message += line.substr(i, 72) + '\n';
   }
   imitate_muduo::InetAddress listenAddr(9981);

@@ -2,6 +2,7 @@
 #define IMITATE_MUDUO_CONNECTOR_H
 
 #include "InetAddress.h"
+#include "TimerId.h"
 #include <functional>
 #include <memory>
 
@@ -32,7 +33,7 @@ private:
   void handleWrite();
   void handleError();
   void retry(int sockfd);
-  void removeAndResetChannel();
+  int removeAndResetChannel();
   void resetChannel();
 
   EventLoop *loop_;
@@ -42,6 +43,7 @@ private:
   std::unique_ptr<Channel> channel_;
   NewConnectionCallback newConnectionCallback_;
   int retryDelayMs_;
+  TimerId timerId_;
 
 public:
   Connector(const Connector &) = delete;
@@ -59,6 +61,7 @@ public:
 
   const InetAddress &serverAddress() const { return serverAddr_; }
 };
+typedef std::shared_ptr<Connector> ConnectorPtr;
 
 } // namespace imitate_muduo
 

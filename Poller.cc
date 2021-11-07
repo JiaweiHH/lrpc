@@ -12,10 +12,10 @@ Poller::Poller(EventLoop *loop) : ownerloop_(loop) {}
 // poll 是 Poller 的核心函数，负责调用 poll(2) 获取当前活动的 IO 事件
 // 并填充调用方传入的 activeChannels，activeChannels 一开始是空的
 // @return poll(2) 返回的时刻，这里使用 system_clock 这个稳定时钟
-std::chrono::system_clock::time_point Poller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
+Timestamp Poller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
   // poll(2) 系统调用返回发生事件的文件描述符数量
   int numEvents = ::poll(&*pollfds_.begin(), pollfds_.size(), timeoutMs);
-  auto now = std::chrono::system_clock::now();
+  auto now = Timestamp::now();
   if (numEvents > 0) {
     BOOST_LOG_TRIVIAL(trace) << numEvents << " events happened";
     fillActiveChannels(numEvents, activeChannels);
@@ -86,7 +86,6 @@ void Poller::updateChannel(Channel *channel) {
     assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
 
     struct pollfd &pfd = pollfds_[idx];
-    BOOST_LOG_TRIVIAL(trace) << "pfd.fd = " << pfd.fd << ", channel->fd() = " << channel->fd() << "\n";
     // -1 相当于不监听这个文件描述符
     assert(pfd.fd == channel->fd() || pfd.fd == -channel->fd() - 1);
 
@@ -112,7 +111,7 @@ void Poller::removeChannel(Channel *channel) {
   assert(pfd.fd == -channel->fd() - 1 && pfd.events == channel->events());
   size_t n = channels_.erase(channel->fd());
   assert(n == 1);
-  if (idx == pollfds_.size() - 1) {
+  if (static_cast<size_t>(idx) == pollfds_.size() - 1) {
     pollfds_.pop_back();
   } else {
     int channelAtEnd = pollfds_.size() - 1;

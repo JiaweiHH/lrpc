@@ -1,6 +1,7 @@
 #include "TimerQueue.h"
 #include "EventLoop.h"
 #include "Timer.h"
+#include "TimerId.h"
 
 #include <algorithm>
 #include <boost/log/trivial.hpp>
@@ -10,11 +11,6 @@
 namespace imitate_muduo {
 
 namespace detail {
-
-std::string translate_time(std::chrono::system_clock::time_point now) {
-  time_t time = std::chrono::system_clock::to_time_t(now);
-  return ctime(&time);
-}
 
 // 创建 timerfd 文件描述符
 int createTimerfd() {
@@ -26,9 +22,16 @@ int createTimerfd() {
 }
 
 // 获取当前时间到 when 的时间差
-std::chrono::microseconds howMuchTimeFromNow(Timestamp when) {
-  return std::chrono::duration_cast<std::chrono::microseconds>(
-      when - std::chrono::system_clock::now());
+struct timespec howMuchTimeFromNow(Timestamp when) {
+  int64_t microseconds =
+      when.microSecondsSinceEpoch() - Timestamp::now().microSecondsSinceEpoch();
+  if (microseconds < 100)
+    microseconds = 100;
+  struct timespec ts;
+  // 设置秒和纳秒
+  ts.tv_sec = static_cast<time_t>(microseconds / Timestamp::kMicroSecondsPerSecond);
+  ts.tv_nsec = static_cast<long>(microseconds % Timestamp::kMicroSecondsPerSecond * 1000);
+  return ts;
 }
 
 // 读取 timerfd 文件描述符
@@ -37,7 +40,7 @@ void readTimerfd(int timerfd, Timestamp now) {
   // 读取 timerfd 返回超时次数
   // 当 timerfd 是阻塞式的时候则 read 操作将阻塞，否则返回 EAGAIN
   ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-  BOOST_LOG_TRIVIAL(trace) << "TimerQueue::handleRead() " << howmany << " at " << translate_time(now);
+  BOOST_LOG_TRIVIAL(trace) << "TimerQueue::handleRead() " << howmany << " at " << now.toString();
   //  << now;
   if (n != sizeof howmany) {
     BOOST_LOG_TRIVIAL(error)
@@ -47,21 +50,13 @@ void readTimerfd(int timerfd, Timestamp now) {
 
 // 设置 timerfd 定时事件
 void resetTimerfd(int timerfd, Timestamp expiration) {
-  // 首先获取到期时间点和现在的时间差
-  auto value = howMuchTimeFromNow(expiration);
-  // BOOST_LOG_TRIVIAL(trace) << value.count();
-
   // newValue 新的超时时间，oldValue 设置新的超时时间之前的超时时间
   struct itimerspec newValue, oldValue;
   bzero(&newValue, sizeof newValue);
   bzero(&oldValue, sizeof oldValue);
 
   // 设置时间间隔
-  const int microSecondPerSeconds = 1000 * 1000;
-  newValue.it_value.tv_sec = value.count() / microSecondPerSeconds; // 设置秒
-  newValue.it_value.tv_nsec =
-      value.count() % microSecondPerSeconds * 1000; // 设置纳秒
-
+  newValue.it_value = howMuchTimeFromNow(expiration);
   // 执行系统调用，设置定时器
   int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
   if (ret) {
@@ -86,59 +81,65 @@ TimerQueue::TimerQueue(EventLoop *loop)
 /// 创建新的 timer 定时任务，然后调用 EventLoop 的 runInLoop
 /// 这样，当调用方不是 IO 线程的时候现在可以将这个工作移动到 IO 线程中了，就不会产生错误
 /// addTimer 是线程安全的，并且不需要加锁
-void TimerQueue::addTimer(const TimerCallback &cb, Timestamp when,
+TimerId TimerQueue::addTimer(const TimerCallback &cb, Timestamp when,
                           double interval) {
-  // std::unique_ptr<Timer> timer = std::make_unique<Timer>(cb, when, interval);
-  // loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, std::move(timer)));
-
-  loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, cb, when, interval));
+  Timer *timer = new Timer(cb, when, interval);
+  loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
+  return TimerId(timer, timer->sequence());
 }
 /// addTimer 的实际工作，只能在 IO 线程中做
-void TimerQueue::addTimerInLoop(const TimerCallback &cb, Timestamp when, double interval) {
-  // 本来这个函数的参数应该是 unique_ptr 的右值引用的，后来这里为了 std::bind 能够绑定改为了左值引用
-  // 虽然这样看着有点丑陋，但是没有什么问题，下面该 move 还是可以放心的 move
-  // 因为该函数只会被调用一次，move 之后 std::bind 绑定的对象中的 timer 就无效了
-  // 但是最后因为编译错误，这里直接改成了 Timer 构造函数的参数。错误原因在于 std::bind 转化为 std::functor 构造的时候出错
-
+void TimerQueue::addTimerInLoop(Timer *timer) {
   loop_->assertInLoopThread();
-  std::unique_ptr timer = std::make_unique<Timer>(cb, when, interval);
-  auto expiration = timer->expiration();
-  bool earliestChanged = insert(std::move(timer));
-  // 之后不应该再使用 timer 这个变量
-
+  bool earliestChanged = insert(timer);
   if (earliestChanged) {
     // 设置定时事件
-    resetTimerfd(timerfd_, expiration);
+    resetTimerfd(timerfd_, timer->expiration());
   }
 }
 
 // 添加新的 Timer
-bool TimerQueue::insert(std::unique_ptr<Timer> &&timer) {
+bool TimerQueue::insert(Timer *timer) {
+  loop_->assertInLoopThread();
+  assert(timers_.size() == activeTimers_.size());
   // 记录这个 timer 是不是 timers_ 中最早到期的
   bool earliestChanged = false;
   Timestamp when = timer->expiration();
   if (timers_.empty() || when < timers_.begin()->first)
     earliestChanged = true;
+  
+  // 插入 timers_
+  {
+    auto result = timers_.insert(std::make_pair(when, std::move(timer)));
+    assert(result.second);
+  }
+  // 插入 activeTimers_
+  {
+    auto result = activeTimers_.insert(ActiveTimer(timer, timer->sequence()));
+    assert(result.second);
+  }
 
-  auto result = timers_.insert(std::make_pair(when, std::move(timer)));
-  assert(result.second);
   return earliestChanged;
 }
 
 // 处理到期的 Timer
 void TimerQueue::handleRead() {
   loop_->assertInLoopThread();
-  Timestamp now(std::chrono::system_clock::now());
+  auto now = Timestamp::now();
   readTimerfd(timerfd_, now);
 
   // 获取到期的 Timers
   // note: 这里不用担心 unique_ptr 不可拷贝的问题，返回的 vector
   // 是右值，所以会自动进行移动
   std::vector<Entry> expired = getExpired(now);
+
+  callingExpiredTimers_ = true;
+  cancelingTimers_.clear();
+
   // 执行 Timers 的回调
   for (const auto &t : expired) {
     t.second->run();
   }
+  callingExpiredTimers_ = false;
   reset(expired, now);
 }
 
@@ -150,24 +151,17 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
   Entry sentry = std::make_pair(now, nullptr);
   auto it = timers_.lower_bound(sentry);
   assert(it == timers_.end() || now < it->first);
-
   // 将 [begin,it) 的元素移入 expired
-  for (auto itera = timers_.begin(); itera != it; ++itera) {
-    // expired.push_back(std::move(*itera)); // note: 记得使用 move
-
-    // 由于 std::set 的元素是 const 类型的，不能随意修改
-    // 所以这里使用的方法比较拙劣，直接拷贝 std::set 元素中 unique_ptr
-    // 指向的那块内存，创建一个新的 unique_ptr，然后存入 expired 中。
-
-    // 其实这样也不会有什么大问题，因为 std::set
-    // 中的元素等下就要直接删除的，只是开销大了一些
-    auto &up = itera->second;
-    expired.push_back(std::make_pair(
-        it->first, std::make_unique<imitate_muduo::Timer>(
-                       up->callback(), up->expiration(), up->interval())));
-  }
+  std::copy(timers_.begin(), it, std::back_inserter(expired));
   timers_.erase(timers_.begin(), it);
 
+  // 从 activeTimers 列表中移除
+  for (auto entry : expired) {
+    ActiveTimer timer(entry.second, entry.second->sequence());
+    size_t n = activeTimers_.erase(timer);
+    assert(n == 1);
+  }
+  assert(timers_.size() == activeTimers_.size());
   // 这里编译器会执行 RVO 优化
   return expired;
 }
@@ -175,10 +169,11 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now) {
 // 检查到期 Timers 中有没有需要重复的，如果需要重复的就重新插入 timers_ 中
 // 这里在使用 insert(std::move(...)) 之后 t.second 已经变成了 nullptr
 void TimerQueue::reset(std::vector<Entry> &expired, Timestamp now) {
-
   // 找出到期的，重新插入
   for (auto &t : expired) {
-    if (t.second->repeat()) {
+    ActiveTimer timer(t.second, t.second->sequence());
+    // 检查定时器不再已经注销的定时器列表中
+    if (t.second->repeat() && cancelingTimers_.find(timer) == cancelingTimers_.end()) {
       t.second->restart(now); // 这里更新它的新的到期时间
       insert(std::move(t.second));
     } else {
@@ -196,3 +191,23 @@ void TimerQueue::reset(std::vector<Entry> &expired, Timestamp now) {
 }
 
 TimerQueue::~TimerQueue() {}
+
+void TimerQueue::cancel(TimerId timerId) {
+  loop_->runInLoop(std::bind(&TimerQueue::cancelInLoop, this, timerId));
+}
+void TimerQueue::cancelInLoop(TimerId timerId) {
+  loop_->assertInLoopThread();
+  assert(timers_.size() == activeTimers_.size());
+  ActiveTimer timer(timerId.timer_, timerId.sequence_);
+  auto it = activeTimers_.find(timer);
+  if (it != activeTimers_.end()) {
+    size_t n = timers_.erase(Entry(it->first->expiration(), it->first));
+    assert(n == 1);
+    delete it->first; // 释放内存空间
+    activeTimers_.erase(it);
+  } else if (callingExpiredTimers_) {
+    // 自注销的场景
+    cancelingTimers_.insert(timer);
+  }
+  assert(timers_.size() == activeTimers_.size());
+}

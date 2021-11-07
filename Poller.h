@@ -2,7 +2,7 @@
 #define IMITATE_MUDUO_POLLER_H
 
 #include "EventLoop.h"
-
+#include "Timestamp.h"
 #include <map>
 #include <vector>
 
@@ -30,7 +30,7 @@ public:
   Poller(EventLoop *loop);
   ~Poller() = default;
 
-  std::chrono::system_clock::time_point poll(int timeoutMS, std::vector<Channel *> &activeChannels);
+  Timestamp poll(int timeoutMS, std::vector<Channel *> &activeChannels);
 
   void updateChannel(Channel *channel);
   void removeChannel(Channel* channel);

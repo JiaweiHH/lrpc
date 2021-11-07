@@ -1,6 +1,7 @@
 #ifndef IMITATE_MUDUO_CALLBACK_H
 #define IMITATE_MUDUO_CALLBACK_H
 
+#include "Timestamp.h"
 #include <functional>
 #include <chrono>
 #include <memory>
@@ -10,7 +11,7 @@ namespace imitate_muduo {
 class TcpConnection;
 class Buffer;
 
-using Timestamp = std::chrono::system_clock::time_point;
+// using Timestamp = std::chrono::system_clock::time_point;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 using TimerCallback = std::function<void()>;
 using ConnectionCallback = std::function<void(const TcpConnectionPtr &)>;

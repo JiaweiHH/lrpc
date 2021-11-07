@@ -36,14 +36,6 @@ public:
 };
 IgnoreSigPipe initObj;
 
-/// @param interval 时间间隔，单位是秒
-static std::chrono::system_clock::time_point
-addTime(const std::chrono::system_clock::time_point &time, double interval) {
-  int micro_time = interval * 1000 * 1000;
-  auto time_point = time + std::chrono::microseconds(micro_time);
-  return time_point;
-}
-
 EventLoop::EventLoop()
     : looping_(false), quit_(false), callingPendingFunctors_(false),
       threadId_(std::this_thread::get_id()), poller_(new Poller(this)),
@@ -135,17 +127,16 @@ void EventLoop::removeChannel(Channel *channel) {
 /// 1. 在某一个时间点执行回调
 /// 2. 在某一个延迟时间之后执行回调
 /// 3. 每隔一个时间段执行回调
-void EventLoop::runAt(const std::chrono::system_clock::time_point &time,
-                      const TimerCallback &cb) {
-  timerQueue_->addTimer(cb, time, 0.0);
+TimerId EventLoop::runAt(const Timestamp &time, const TimerCallback &cb) {
+  return timerQueue_->addTimer(cb, time, 0.0);
 }
-void EventLoop::runAfter(double delay, const TimerCallback &cb) {
-  auto when = addTime(std::chrono::system_clock::now(), delay);
-  timerQueue_->addTimer(cb, when, 0.0);
+TimerId EventLoop::runAfter(double delay, const TimerCallback &cb) {
+  auto when = addTime(Timestamp::now(), delay);
+  return timerQueue_->addTimer(cb, when, 0.0);
 }
-void EventLoop::runEvery(double interval, const TimerCallback &cb) {
-  auto when = addTime(std::chrono::system_clock::now(), interval);
-  timerQueue_->addTimer(cb, when, interval);
+TimerId EventLoop::runEvery(double interval, const TimerCallback &cb) {
+  auto when = addTime(Timestamp::now(), interval);
+  return timerQueue_->addTimer(cb, when, interval);
 }
 
 /// 如果用户在 IO 线程中调用，则回调会同步进行
@@ -231,4 +222,8 @@ void EventLoop::handleRead() {
   ssize_t n = ::read(wakeupFd_, &one, sizeof one); 
   if (n != sizeof one)
     BOOST_LOG_TRIVIAL(error) << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
+}
+
+void EventLoop::cancel(TimerId timerId) {
+  timerQueue_->cancel(timerId);
 }

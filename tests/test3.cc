@@ -10,8 +10,7 @@
 imitate_muduo::EventLoop *g_loop;
 
 void timeout(imitate_muduo::Timestamp recieveTime) {
-  time_t time = std::chrono::system_clock::to_time_t(recieveTime);
-  std::cout << ctime(&time) << " Timeout!\n";
+  std::cout << recieveTime.toFormattedString() << "\n";
   g_loop->quit();
 }
 

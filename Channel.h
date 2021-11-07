@@ -2,6 +2,7 @@
 #define IMITATE_MUDUO_CHANNEL_H
 
 #include "Callback.h"
+#include "Timestamp.h"
 #include <functional>
 
 namespace imitate_muduo {
