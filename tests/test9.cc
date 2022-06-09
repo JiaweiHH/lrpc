@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <unistd.h>
 
-void onConnection(const imitate_muduo::TcpConnectionPtr &conn) {
+void onConnection(const lrpc::net::TcpConnectionPtr &conn) {
   if (conn->connected()) {
     printf("onConnection(): new connection [%s] from %s\n",
            conn->name().c_str(), conn->peerAddress().toHostPort().c_str());
@@ -13,9 +13,9 @@ void onConnection(const imitate_muduo::TcpConnectionPtr &conn) {
   }
 }
 
-void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
-               imitate_muduo::Buffer *buf,
-               imitate_muduo::Timestamp recieveTime) {
+void onMessage(const lrpc::net::TcpConnectionPtr &conn,
+               lrpc::net::Buffer *buf,
+               lrpc::net::Timestamp recieveTime) {
   printf("onMessage(): recieved %zd bytes from connection [%s] at %s\n",
          buf->readableBytes(), conn->name().c_str(),
          recieveTime.toFormattedString().c_str());
@@ -24,9 +24,9 @@ void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
 
 int main(int argc, char *argv[]) {
   printf("main(): pid = %d\n", getpid());
-  imitate_muduo::InetAddress listenAddr(9981);
-  imitate_muduo::EventLoop loop;
-  imitate_muduo::TcpServer server(&loop, listenAddr);
+  lrpc::net::InetAddress listenAddr(9981);
+  lrpc::net::EventLoop loop;
+  lrpc::net::TcpServer server(&loop, listenAddr);
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
   if (argc > 1)

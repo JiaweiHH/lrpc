@@ -12,12 +12,12 @@
 #include "EventLoop.h"
 #include <thread>
 
-imitate_muduo::EventLoop *g_loop;
+lrpc::net::EventLoop *g_loop;
 
 void threadFunc() { g_loop->loop(); }
 
 int main() {
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   g_loop = &loop;
   std::thread t(threadFunc);
   t.join();

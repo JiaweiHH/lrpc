@@ -1,15 +1,18 @@
 #ifndef IMITATE_MUDUO_EVENTLOOP_H
 #define IMITATE_MUDUO_EVENTLOOP_H
 
-#include "Timestamp.h"
 #include "TimerId.h"
+#include "Timestamp.h"
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
+
+using namespace util;
 
 class Channel;
 class Poller;
@@ -21,27 +24,6 @@ public:
   using TimerCallback = std::function<void()>;
   using Functor = std::function<void()>;
 
-private:
-  bool looping_;
-  bool quit_;
-  bool callingPendingFunctors_;
-
-  std::thread::id threadId_; // EventLoop 所属线程编号
-  Timestamp pollReturnTime_; // 记录上一次 Poller::poll 返回的时间
-  std::unique_ptr<Poller> poller_;         // 执行 IO mutilplexing
-  std::unique_ptr<TimerQueue> timerQueue_; // TimerQueue
-  int wakeupFd_;                           // eventfd，用来唤醒 IO 线程
-  std::unique_ptr<Channel> wakeChannel_; // 处理 wakeupFd_ 上的 readable 事件
-  std::vector<Channel *> activeChannels_; // 记录每一次调用 poll 的活动事件
-  std::mutex mutex_; // 在多线程间保护 pendingFunctors_
-  std::vector<Functor> pendingFunctors_;
-
-  // 报错
-  void abortNotInLoopThread();
-  void handleRead();
-  void doPendingFunctors();
-
-public:
   EventLoop(const EventLoop &) = delete;
   EventLoop &operator=(const EventLoop &) = delete;
   EventLoop();
@@ -85,7 +67,28 @@ public:
   }
 
   static EventLoop *getEventLoopOfCurrentThread();
+
+private:
+  bool looping_;
+  bool quit_;
+  bool callingPendingFunctors_;
+
+  std::thread::id threadId_; // EventLoop 所属线程编号
+  Timestamp pollReturnTime_; // 记录上一次 Poller::poll 返回的时间
+  std::unique_ptr<Poller> poller_;         // 执行 IO mutilplexing
+  std::unique_ptr<TimerQueue> timerQueue_; // TimerQueue
+  int wakeupFd_;                           // eventfd，用来唤醒 IO 线程
+  std::unique_ptr<Channel> wakeChannel_; // 处理 wakeupFd_ 上的 readable 事件
+  std::vector<Channel *> activeChannels_; // 记录每一次调用 poll 的活动事件
+  std::mutex mutex_; // 在多线程间保护 pendingFunctors_
+  std::vector<Functor> pendingFunctors_;
+
+  // 报错
+  void abortNotInLoopThread();
+  void handleRead();
+  void doPendingFunctors();
 };
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

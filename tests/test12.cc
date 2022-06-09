@@ -2,7 +2,7 @@
 #include "../EventLoop.h"
 #include <cstdio>
 
-imitate_muduo::EventLoop *g_loop;
+lrpc::net::EventLoop *g_loop;
 
 void connectCallback(int sockfd) {
   printf("connected.\n");
@@ -10,10 +10,10 @@ void connectCallback(int sockfd) {
 }
 
 int main() {
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   g_loop = &loop;
-  imitate_muduo::InetAddress addr("127.0.0.1", 9981);
-  imitate_muduo::ConnectorPtr connector(new imitate_muduo::Connector(&loop, addr));
+  lrpc::net::InetAddress addr("127.0.0.1", 9981);
+  lrpc::net::ConnectorPtr connector(new lrpc::net::Connector(&loop, addr));
   connector->setNewConnectionCallback(connectCallback);
   connector->start();
   loop.loop();

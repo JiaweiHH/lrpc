@@ -3,7 +3,8 @@
 
 #include <stdint-gcc.h>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Timer;
 
@@ -12,12 +13,14 @@ public:
   TimerId(Timer *timer = nullptr, int64_t seq = 0)
       : timer_(timer), sequence_(seq) {}
   friend class TimerQueue;
+
 private:
   // 需要同时根据 Timer* 地址和 seq 才能唯一确定定时器
   Timer *timer_;
   int64_t sequence_;
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

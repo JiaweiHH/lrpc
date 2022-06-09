@@ -1,18 +1,19 @@
 #ifndef IMITATE_MUDUO_EVENTLOOPTHREAD_H
 #define IMITATE_MUDUO_EVENTLOOPTHREAD_H
 
-#include <thread>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <thread>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class EventLoop;
 
 class EventLoopThread {
 private:
   void threadFunc();
-  
+
   EventLoop *loop_;
   bool exiting_;
   std::thread thread_;
@@ -21,13 +22,14 @@ private:
 
 public:
   EventLoopThread(const EventLoopThread &) = delete;
-  EventLoopThread& operator=(const EventLoopThread &) = delete;
+  EventLoopThread &operator=(const EventLoopThread &) = delete;
   EventLoopThread();
   ~EventLoopThread();
-  
+
   EventLoop *startLoop();
 };
 
-}
+} // namespace net
+} // namespace lrpc
 
 #endif

@@ -1,7 +1,8 @@
 #ifndef IMITATE_MUDUO_SOCKET_H
 #define IMITATE_MUDUO_SOCKET_H
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class InetAddress;
 
@@ -27,6 +28,7 @@ public:
   void setTcpNoDelay(bool on);
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

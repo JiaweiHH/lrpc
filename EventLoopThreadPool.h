@@ -6,7 +6,8 @@
 #include <thread>
 #include <vector>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class EventLoop;
 class EventLoopThread;
@@ -31,6 +32,7 @@ public:
   EventLoop *getNextLoop();
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

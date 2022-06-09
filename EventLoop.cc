@@ -4,12 +4,14 @@
 #include "Poller.h"
 #include "TimerQueue.h"
 #include "signal.h"
+#include "Logging.h"
 #include <assert.h>
-#include <boost/log/trivial.hpp>
+#include <unistd.h>
 #include <poll.h>
 #include <sys/eventfd.h>
+#include <thread>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 // thread_local 变量记录当前线程的 EventLoop
 thread_local EventLoop *t_loopInThisThread = 0;
@@ -19,7 +21,7 @@ const int kPollTimeMs = 10000;
 static int createEventfd() {
   int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
   if (evtfd < 0) {
-    BOOST_LOG_TRIVIAL(error) << "Failed in eventfd";
+    LOG_ERROR << "Failed in eventfd";
     abort();
   }
   return evtfd;
@@ -41,11 +43,11 @@ EventLoop::EventLoop()
       threadId_(std::this_thread::get_id()), poller_(new Poller(this)),
       timerQueue_(new TimerQueue(this)), wakeupFd_(createEventfd()),
       wakeChannel_(new Channel(this, wakeupFd_)) {
-  BOOST_LOG_TRIVIAL(trace) << "EventLoop created " << this << " in thread 0x" << std::hex << threadId_;
+  LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_;
   // 检查当前线程是否已经创建了 EventLoop 对象
   if (t_loopInThisThread) {
-    BOOST_LOG_TRIVIAL(fatal) << "Another EventLoop " << t_loopInThisThread
-                             << " exists in this thread " << threadId_;
+    LOG_FATAL << "Another EventLoop " << t_loopInThisThread
+              << " exists in this thread " << threadId_;
   } else {
     t_loopInThisThread = this;
   }
@@ -84,17 +86,16 @@ void EventLoop::loop() {
     doPendingFunctors();
   }
 
-  BOOST_LOG_TRIVIAL(trace) << "EventLoop " << this << " stop looping";
+  LOG_TRACE << "EventLoop " << this << " stop looping";
   looping_ = false;
 }
 
 /// 断言错误的时候打印错误信息
 void EventLoop::abortNotInLoopThread() {
-  BOOST_LOG_TRIVIAL(fatal) << "EventLoop::abortNotInLoopThread - EventLoop "
-                           << this
-                           << " was created in threadId_ = " << threadId_
-                           << ", current thread id = "
-                           << std::this_thread::get_id();
+  // TODO
+  LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
+            << " was created in threadId_ = " << threadId_
+            << ", current thread id = " << std::this_thread::get_id();
 }
 
 void EventLoop::quit() {
@@ -206,7 +207,7 @@ void EventLoop::wakeup() {
   uint64_t one = 1;
   ssize_t n = ::write(wakeupFd_, &one, sizeof one);
   if (n != sizeof one)
-    BOOST_LOG_TRIVIAL(error) << "EventLoop::wake() writes " << n << " bytes instead of 8";
+    LOG_ERROR << "EventLoop::wake() writes " << n << " bytes instead of 8";
 }
 /// 读取 eventfd
 void EventLoop::handleRead() {
@@ -221,7 +222,7 @@ void EventLoop::handleRead() {
   uint64_t one = 1;
   ssize_t n = ::read(wakeupFd_, &one, sizeof one); 
   if (n != sizeof one)
-    BOOST_LOG_TRIVIAL(error) << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
+    LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
 }
 
 void EventLoop::cancel(TimerId timerId) {

@@ -1,8 +1,10 @@
-BINARIES = test8
-LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc ../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../EventLoopThreadPool.cc ../TcpServer.cc ../Buffer.cc ../Timestamp.cc ../Connector.cc
+BINARIES = test11 test12
+LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc \
+../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../EventLoopThreadPool.cc \
+../TcpServer.cc ../Buffer.cc ../util/Timestamp.cc ../Connector.cc ../util/LogFile.cc ../util/LogStream.cc ../util/Logging.cc
 
-CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -DBOOST_LOG_DYN_LINK -I..
-LDFLAGS = -lpthread -lboost_log
+CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -I.. -I../util
+LDFLAGS = -lpthread
 
 all: $(BINARIES)
 

@@ -11,7 +11,8 @@
 #include <thread>
 #include <vector>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class EventLoop;
 class Timer;
@@ -20,6 +21,15 @@ class TimerId;
 /// 定时器
 /// TimerQueue 的成员函数只会在其所属的 IO 线程中调用，因此不需要加锁
 class TimerQueue {
+public:
+  TimerQueue(const TimerQueue &) = delete;
+  TimerQueue &operator=(const TimerQueue &) = delete;
+  TimerQueue(EventLoop *loop);
+  ~TimerQueue();
+
+  TimerId addTimer(const TimerCallback &cb, Timestamp when, double interval);
+  void cancel(TimerId timerId);
+
 private:
   using Entry = std::pair<Timestamp, Timer *>;
   using ActiveTimer = std::pair<Timer *, int64_t>;
@@ -38,8 +48,8 @@ private:
   EventLoop *loop_;
   const int timerfd_;
   Channel timerfdChannel_;
-  // set 中保存 pair<Timestamp, Timer *>，这样即便两个 Timer 的到期时间相同，pair 是不同的
-  // 按照到期时间排序
+  // set 中保存 pair<Timestamp, Timer *>，这样即便两个 Timer
+  // 的到期时间相同，pair 是不同的，按照到期时间排序
   std::set<Entry> timers_;
 
   // for cancel
@@ -48,17 +58,9 @@ private:
   // 按照对象地址排序
   std::set<ActiveTimer> activeTimers_;
   std::set<ActiveTimer> cancelingTimers_;
-
-public:
-  TimerQueue(const TimerQueue &) = delete;
-  TimerQueue &operator=(const TimerQueue &) = delete;
-  TimerQueue(EventLoop *loop);
-  ~TimerQueue();
-
-  TimerId addTimer(const TimerCallback &cb, Timestamp when, double interval);
-  void cancel(TimerId timerId);
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

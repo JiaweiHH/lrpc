@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 int cnt = 0;
-imitate_muduo::EventLoop *g_loop;
+lrpc::net::EventLoop *g_loop;
 
 // 获取系统当前时间
 std::string getCurrentSystemTime() {
@@ -35,7 +35,7 @@ void print(const char *msg) {
 
 int main() {
   printTid();
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   g_loop = &loop;
 
   print("main");

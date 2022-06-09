@@ -1,11 +1,10 @@
 #include "Buffer.h"
 #include "SocketsOps.h"
-#include <boost/log/trivial.hpp>
 #include <cerrno>
 #include <memory.h>
 #include <sys/uio.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 /// 直接从文件读取数据到 buffer
 ssize_t Buffer::readFd(int fd, int *savedErrno) {

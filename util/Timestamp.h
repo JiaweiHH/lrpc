@@ -5,13 +5,14 @@
 //
 // Author: Shuo Chen (giantchen at gmail dot com)
 
-#ifndef IMITATE_MUDUO_BASE_TIMESTAMP_H
-#define IMITATE_MUDUO_BASE_TIMESTAMP_H
+#ifndef MUDUO_BASE_TIMESTAMP_H
+#define MUDUO_BASE_TIMESTAMP_H
 
 #include <stdint.h>
 #include <string>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace util {
 
 ///
 /// Time stamp in UTC, in microseconds resolution.
@@ -97,5 +98,7 @@ inline Timestamp addTime(Timestamp timestamp, double seconds) {
   return Timestamp(timestamp.microSecondsSinceEpoch() + delta);
 }
 
-} // namespace muduo
-#endif // IMITATE_MUDUO_BASE_TIMESTAMP_H
+} // namespace util
+} // namespace lrpc
+
+#endif // MUDUO_BASE_TIMESTAMP_H

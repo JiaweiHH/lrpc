@@ -6,7 +6,8 @@
 #include <map>
 #include <memory>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Acceptor;
 class EventLoop;
@@ -58,6 +59,7 @@ public:
   }
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

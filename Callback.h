@@ -2,11 +2,14 @@
 #define IMITATE_MUDUO_CALLBACK_H
 
 #include "Timestamp.h"
-#include <functional>
 #include <chrono>
+#include <functional>
 #include <memory>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
+
+using namespace util;
 
 class TcpConnection;
 class Buffer;
@@ -23,6 +26,7 @@ using MessageCallback =
 using CloseCallback = std::function<void(const TcpConnectionPtr &)>;
 using WriteCompleteCallback = std::function<void(const TcpConnectionPtr &)>;
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

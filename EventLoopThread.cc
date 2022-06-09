@@ -3,7 +3,7 @@
 
 #include <functional>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 EventLoopThread::EventLoopThread() : loop_(nullptr), exiting_(false) {}
 

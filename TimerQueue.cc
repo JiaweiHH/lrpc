@@ -1,14 +1,15 @@
 #include "TimerQueue.h"
 #include "EventLoop.h"
+#include "Logging.h"
 #include "Timer.h"
 #include "TimerId.h"
-
 #include <algorithm>
-#include <boost/log/trivial.hpp>
 #include <iostream>
 #include <sys/timerfd.h>
+#include <unistd.h>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 namespace detail {
 
@@ -16,7 +17,7 @@ namespace detail {
 int createTimerfd() {
   int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
   if (timerfd < 0) {
-    BOOST_LOG_TRIVIAL(fatal) << "Failed in timerfd_create";
+    LOG_FATAL << "Failed in timerfd_create";
   }
   return timerfd;
 }
@@ -29,8 +30,10 @@ struct timespec howMuchTimeFromNow(Timestamp when) {
     microseconds = 100;
   struct timespec ts;
   // 设置秒和纳秒
-  ts.tv_sec = static_cast<time_t>(microseconds / Timestamp::kMicroSecondsPerSecond);
-  ts.tv_nsec = static_cast<long>(microseconds % Timestamp::kMicroSecondsPerSecond * 1000);
+  ts.tv_sec =
+      static_cast<time_t>(microseconds / Timestamp::kMicroSecondsPerSecond);
+  ts.tv_nsec = static_cast<long>(microseconds %
+                                 Timestamp::kMicroSecondsPerSecond * 1000);
   return ts;
 }
 
@@ -40,10 +43,11 @@ void readTimerfd(int timerfd, Timestamp now) {
   // 读取 timerfd 返回超时次数
   // 当 timerfd 是阻塞式的时候则 read 操作将阻塞，否则返回 EAGAIN
   ssize_t n = ::read(timerfd, &howmany, sizeof howmany);
-  BOOST_LOG_TRIVIAL(trace) << "TimerQueue::handleRead() " << howmany << " at " << now.toString();
+  LOG_TRACE << "TimerQueue::handleRead() " << howmany << " at "
+            << now.toString();
   //  << now;
   if (n != sizeof howmany) {
-    BOOST_LOG_TRIVIAL(error)
+    LOG_ERROR
         << "TimerQueue::handleRead() reads " << n << " bytes instead of 8";
   }
 }
@@ -60,16 +64,17 @@ void resetTimerfd(int timerfd, Timestamp expiration) {
   // 执行系统调用，设置定时器
   int ret = ::timerfd_settime(timerfd, 0, &newValue, &oldValue);
   if (ret) {
-    BOOST_LOG_TRIVIAL(error) << "timerfd_settime()";
+    LOG_ERROR << "timerfd_settime()";
   }
 }
 
 } // namespace detail
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
-using namespace imitate_muduo;
-using namespace imitate_muduo::detail;
+using namespace lrpc::net;
+using namespace lrpc::net::detail;
 
 TimerQueue::TimerQueue(EventLoop *loop)
     : loop_(loop), timerfd_(createTimerfd()), timerfdChannel_(loop, timerfd_),
@@ -79,10 +84,10 @@ TimerQueue::TimerQueue(EventLoop *loop)
 }
 
 /// 创建新的 timer 定时任务，然后调用 EventLoop 的 runInLoop
-/// 这样，当调用方不是 IO 线程的时候现在可以将这个工作移动到 IO 线程中了，就不会产生错误
-/// addTimer 是线程安全的，并且不需要加锁
+/// 这样，当调用方不是 IO 线程的时候现在可以将这个工作移动到 IO
+/// 线程中了，就不会产生错误 addTimer 是线程安全的，并且不需要加锁
 TimerId TimerQueue::addTimer(const TimerCallback &cb, Timestamp when,
-                          double interval) {
+                             double interval) {
   Timer *timer = new Timer(cb, when, interval);
   loop_->runInLoop(std::bind(&TimerQueue::addTimerInLoop, this, timer));
   return TimerId(timer, timer->sequence());
@@ -106,7 +111,7 @@ bool TimerQueue::insert(Timer *timer) {
   Timestamp when = timer->expiration();
   if (timers_.empty() || when < timers_.begin()->first)
     earliestChanged = true;
-  
+
   // 插入 timers_
   {
     auto result = timers_.insert(std::make_pair(when, std::move(timer)));
@@ -173,7 +178,8 @@ void TimerQueue::reset(std::vector<Entry> &expired, Timestamp now) {
   for (auto &t : expired) {
     ActiveTimer timer(t.second, t.second->sequence());
     // 检查定时器不再已经注销的定时器列表中
-    if (t.second->repeat() && cancelingTimers_.find(timer) == cancelingTimers_.end()) {
+    if (t.second->repeat() &&
+        cancelingTimers_.find(timer) == cancelingTimers_.end()) {
       t.second->restart(now); // 这里更新它的新的到期时间
       insert(std::move(t.second));
     } else {

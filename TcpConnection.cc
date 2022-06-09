@@ -3,12 +3,13 @@
 #include "EventLoop.h"
 #include "Socket.h"
 #include "SocketsOps.h"
-#include <boost/log/trivial.hpp>
+#include "Logging.h"
 #include <cerrno>
+#include <unistd.h>
 #include <cstdio>
 #include <string>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 std::string TcpConnection::stateEnumToStr(StateE state) {
   std::string str;
@@ -35,7 +36,7 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &nameArg,
     : loop_(loop), name_(nameArg), state_(StateE::kConnecting),
       socket_(new Socket(sockfd)), channel_(new Channel(loop, sockfd)),
       localAddr_(localAddr), peerAddr_(peerAddr) {
-  BOOST_LOG_TRIVIAL(debug) << "TcpConnection::ctor[" << name_ << "] at" << this
+  LOG_DEBUG << "TcpConnection::ctor[" << name_ << "] at " << this
                            << " fd = " << sockfd;
   channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
   channel_->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
@@ -44,7 +45,7 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &nameArg,
 }
 
 TcpConnection::~TcpConnection() {
-  BOOST_LOG_TRIVIAL(debug) << "TcpConnection::dtor[" << name_ << "] at " << this
+  LOG_DEBUG << "TcpConnection::dtor[" << name_ << "] at " << this
                            << " fd=" << channel_->fd();
 }
 
@@ -83,7 +84,7 @@ void TcpConnection::handleRead(Timestamp recieveTime) {
     handleClose();
   } else {
     errno = savedErrno;
-    BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleRead";
+    LOG_ERROR << "TcpConnection::handleRead";
     handleError();
   }
 }
@@ -105,19 +106,19 @@ void TcpConnection::handleWrite() {
         if (state_ == StateE::kDisConnecting)
           shutdownInLoop();
       } else {
-        BOOST_LOG_TRIVIAL(trace) << "I am going to write more data";
+        LOG_TRACE << "I am going to write more data";
       }
     } else {
-      BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleWrite";
+      LOG_ERROR << "TcpConnection::handleWrite";
     }
   } else {
-    BOOST_LOG_TRIVIAL(trace) << "Connection is down, no more writing";
+    LOG_TRACE << "Connection is down, no more writing";
   }
 }
 
 void TcpConnection::handleClose() {
   loop_->assertInLoopThread();
-  BOOST_LOG_TRIVIAL(trace) << "TcpConnection::handleClose state = " << stateEnumToStr(state_);
+  LOG_TRACE << "TcpConnection::handleClose state = " << stateEnumToStr(state_);
   assert(state_ == StateE::kConnected || state_ == StateE::kDisConnecting);
   channel_->disableAll();
   // closeCallback_ 绑定到 TcpServer::removeConnection
@@ -127,7 +128,7 @@ void TcpConnection::handleClose() {
 void TcpConnection::handleError() {
   int err = sockets::getSocketError(channel_->fd());
   char t_errnobuf[512];
-  BOOST_LOG_TRIVIAL(error) << "TcpConnection::handleError [" << name_
+  LOG_ERROR << "TcpConnection::handleError [" << name_
                            << "] - SO_ERROR = " << err << " "
                            << strerror_r(err, t_errnobuf, sizeof t_errnobuf);
 }
@@ -166,14 +167,14 @@ void TcpConnection::sendInLoop(const std::string &message) {
     if (nwrote >= 0) {
       // 数据没有发送完全
       if (static_cast<size_t>(nwrote) < message.size()) {
-        BOOST_LOG_TRIVIAL(trace) << "I am going to write more data";
+        LOG_TRACE << "I am going to write more data";
       } else if (writeCompleteCallback_) {
         loop_->queueInLoop(std::bind(writeCompleteCallback_, shared_from_this()));
       }
     } else {
       nwrote = 0;
       if (errno != EWOULDBLOCK) {
-        BOOST_LOG_TRIVIAL(error) << "TcpConnection::sendInLoop";
+        LOG_ERROR << "TcpConnection::sendInLoop";
       }
     }
   }

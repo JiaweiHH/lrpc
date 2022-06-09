@@ -1,10 +1,10 @@
 #include "Channel.h"
 #include "EventLoop.h"
-#include <boost/log/trivial.hpp>
+#include "Logging.h"
 
 #include <poll.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 const int Channel::kNoneEvent = 0;
 const int Channel::kReadEvent = POLLIN | POLLPRI;
@@ -14,9 +14,7 @@ Channel::Channel(EventLoop *loop, int fdArg)
     : loop_(loop), fd_(fdArg), events_(0), revents_(0), index_(-1),
       eventHanding_(false) {}
 
-Channel::~Channel() {
-  assert(!eventHanding_);
-}
+Channel::~Channel() { assert(!eventHanding_); }
 
 void Channel::update() { loop_->updateChannel(this); }
 
@@ -24,11 +22,11 @@ void Channel::handleEvent(Timestamp recieveTime) {
   eventHanding_ = true;
   // 指定的文件描述符非法
   if (revents_ & POLLNVAL) {
-    BOOST_LOG_TRIVIAL(warning) << "Channel::handle_event() POLLNVAL";
+    LOG_WARN << "Channel::handle_event() POLLNVAL";
   }
 
-  if((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
-    BOOST_LOG_TRIVIAL(warning) << "Channel::handle_event() POLLHUP";
+  if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
+    LOG_WARN << "Channel::handle_event() POLLHUP";
     if (closeCallback_)
       closeCallback_();
   }

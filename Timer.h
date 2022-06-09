@@ -3,10 +3,11 @@
 
 #include "Callback.h"
 #include "Timestamp.h"
-#include <functional>
 #include <atomic>
+#include <functional>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Timer {
 private:
@@ -22,7 +23,8 @@ public:
   Timer(const Timer &) = delete;
   Timer &operator=(const Timer &) = delete;
   Timer(const TimerCallback &cb, Timestamp when, double interval)
-      : callback_(cb), expiration_(when), interval_(interval), sequence_(s_numCreated_++) {}
+      : callback_(cb), expiration_(when), interval_(interval),
+        sequence_(s_numCreated_++) {}
   ~Timer();
 
   void run() const { callback_(); }
@@ -36,6 +38,7 @@ public:
   void restart(Timestamp now);
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

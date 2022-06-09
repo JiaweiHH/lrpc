@@ -5,7 +5,8 @@
 #include <string>
 #include <vector>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 /// @code
 /// +-------------------+------------------+------------------+
@@ -16,36 +17,6 @@ namespace imitate_muduo {
 /// 0      <=      readerIndex   <=   writerIndex    <=     size
 
 class Buffer {
-private:
-  /// 获取缓冲区的首地址
-  char *begin() { return &*buffer_.begin(); }
-  const char *begin() const { return &*buffer_.begin(); }
-
-  /// 扩充缓冲区的大小
-  /// @param len 新缓冲区至少需要可写字节数
-  void makeSpace(size_t len) {
-    if (writeableBytes() + prependableBytes() < len + kCheapPrepend) {
-      // 缓冲区总大小 < 新缓冲区需要的大小
-
-      // 那直接扩充 len 字节
-      buffer_.resize(writerIndex_ + len);
-    } else {
-      // 说明当前缓冲区的总大小已经足够了，只是随着时间的推移，前置区域太大了
-
-      // 把可读数据移到前面去
-      assert(kCheapPrepend < readerIndex_);
-      size_t readable = readableBytes();
-      std::copy(begin() + readerIndex_, begin() + writerIndex_,
-                begin() + kCheapPrepend);
-      writerIndex_ = readerIndex_ + readable;
-      assert(readable == readableBytes());
-    }
-  }
-
-  std::vector<char> buffer_;
-  size_t readerIndex_;
-  size_t writerIndex_;
-
 public:
   static const size_t kCheapPrepend = 8;
   static const size_t kInitialSize = 1024;
@@ -136,8 +107,40 @@ public:
   void hasWritten(size_t len) { writerIndex_ += len; }
 
   ssize_t readFd(int fd, int *savedError);
+
+private:
+  /// 获取缓冲区的首地址
+  char *begin() { return &*buffer_.begin(); }
+  const char *begin() const { return &*buffer_.begin(); }
+
+  /// 扩充缓冲区的大小
+  /// @param len 新缓冲区至少需要可写字节数
+  void makeSpace(size_t len) {
+    if (writeableBytes() + prependableBytes() < len + kCheapPrepend) {
+      // 缓冲区总大小 < 新缓冲区需要的大小
+
+      // 那直接扩充 len 字节
+      buffer_.resize(writerIndex_ + len);
+    } else {
+      // 说明当前缓冲区的总大小已经足够了，只是随着时间的推移，前置区域太大了
+
+      // 把可读数据移到前面去
+      assert(kCheapPrepend < readerIndex_);
+      size_t readable = readableBytes();
+      std::copy(begin() + readerIndex_, begin() + writerIndex_,
+                begin() + kCheapPrepend);
+      writerIndex_ = readerIndex_ + readable;
+      assert(readable == readableBytes());
+    }
+  }
+
+  std::vector<char> buffer_;
+  size_t readerIndex_;
+  size_t writerIndex_;
 };
 
-} // namespace imitate_muduo
+} // namespace net
+
+} // namespace lrpc
 
 #endif

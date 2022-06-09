@@ -1,11 +1,12 @@
 #include "Poller.h"
 #include "Channel.h"
+#include "Logging.h"
 #include "boost/log/trivial.hpp"
 
 #include <assert.h>
 #include <poll.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 Poller::Poller(EventLoop *loop) : ownerloop_(loop) {}
 
@@ -17,12 +18,12 @@ Timestamp Poller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
   int numEvents = ::poll(&*pollfds_.begin(), pollfds_.size(), timeoutMs);
   auto now = Timestamp::now();
   if (numEvents > 0) {
-    BOOST_LOG_TRIVIAL(trace) << numEvents << " events happened";
+    LOG_TRACE << numEvents << " events happened";
     fillActiveChannels(numEvents, activeChannels);
   } else if (numEvents == 0) {
-    BOOST_LOG_TRIVIAL(trace) << " nothing happened";
+    LOG_TRACE << " nothing happened";
   } else {
-    BOOST_LOG_TRIVIAL(error) << "Poller::poll()";
+    LOG_ERROR << "Poller::poll()";
   }
   return now;
 }
@@ -52,7 +53,7 @@ void Poller::fillActiveChannels(int numEvents,
 // note: 这里不需要传入 fd，因为在 Channel 类中已经包含了
 void Poller::updateChannel(Channel *channel) {
   assertInLoopThread();
-  BOOST_LOG_TRIVIAL(trace) << "fd = " << channel->fd()
+  LOG_TRACE << "fd = " << channel->fd()
                            << " events = " << channel->events();
   // 添加新的映射
   if (channel->index() < 0) {
@@ -100,7 +101,7 @@ void Poller::updateChannel(Channel *channel) {
 
 void Poller::removeChannel(Channel *channel) {
   assertInLoopThread();
-  BOOST_LOG_TRIVIAL(trace) << "fd = " << channel->fd();
+  LOG_TRACE << "fd = " << channel->fd();
   assert(channels_.find(channel->fd()) != channels_.end());
   assert(channels_[channel->fd()] == channel);
   assert(channel->isNoneEvent());

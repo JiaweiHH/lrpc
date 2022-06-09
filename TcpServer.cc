@@ -3,10 +3,10 @@
 #include "EventLoop.h"
 #include "EventLoopThreadPool.h"
 #include "SocketsOps.h"
-#include <boost/log/trivial.hpp>
+#include "Logging.h"
 #include <cstdio>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 TcpServer::TcpServer(EventLoop *loop, const InetAddress &listenAddr)
     : loop_(loop), name_(listenAddr.toHostPort()),
@@ -49,7 +49,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr) {
   ++nextConnId_;
   std::string connName = name_ + buf;
 
-  BOOST_LOG_TRIVIAL(info) << "TcpServer::newConnection [" << name_
+  LOG_INFO << "TcpServer::newConnection [" << name_
                           << "] - new connection [" << connName << "] from "
                           << peerAddr.toHostPort();
   InetAddress localAddr(sockets::getLocalAddr(sockfd));
@@ -74,7 +74,7 @@ void TcpServer::removeConnection(const TcpConnectionPtr &conn) {
 }
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr &conn) {
   loop_->assertInLoopThread();
-  BOOST_LOG_TRIVIAL(info) << "TcpServer::removeConnectionInLoop [" << name_
+  LOG_INFO << "TcpServer::removeConnectionInLoop [" << name_
                           << "] - connection " << conn->name();
   size_t n = connections_.erase(conn->name());
   assert(n == 1);

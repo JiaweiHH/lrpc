@@ -1,6 +1,5 @@
 #include "SocketsOps.h"
-
-#include <boost/log/trivial.hpp>
+#include "Logging.h"
 #include <cstdio>
 #include <cstring>
 #include <error.h>
@@ -8,7 +7,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 namespace {
 
@@ -40,13 +39,13 @@ int sockets::createNonblockingOrDie() {
 #if VALGRIND
   int sockfd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (sockfd < 0)
-    BOOST_LOG_TRIVIAL(fatal) << "sockets::createNonblockingOrDie";
+    LOG_FATAL << "sockets::createNonblockingOrDie";
   setNonBlockAndCloseOnExec(sockfd);
 #else
   int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
                         IPPROTO_TCP);
   if (sockfd < 0)
-    BOOST_LOG_TRIVIAL(fatal) << "sockets::createNonblockingOrDie";
+    LOG_FATAL << "sockets::createNonblockingOrDie";
 #endif
   return sockfd;
 }
@@ -54,13 +53,13 @@ int sockets::createNonblockingOrDie() {
 void sockets::bindOrDie(int sockfd, const struct sockaddr_in &addr) {
   int ret = ::bind(sockfd, sockaddr_cast(&addr), sizeof addr);
   if (ret < 0)
-    BOOST_LOG_TRIVIAL(fatal) << "sockets::bindOrDie";
+    LOG_FATAL << "sockets::bindOrDie";
 }
 
 void sockets::listenOrDie(int sockfd) {
   int ret = ::listen(sockfd, SOMAXCONN);
   if (ret < 0)
-    BOOST_LOG_TRIVIAL(fatal) << "sockets::listenAddr";
+    LOG_FATAL << "sockets::listenAddr";
 }
 
 int sockets::accept(int sockfd, struct sockaddr_in *addr) {
@@ -74,7 +73,7 @@ int sockets::accept(int sockfd, struct sockaddr_in *addr) {
 #endif
   if (connfd < 0) {
     int savedErrno = errno;
-    BOOST_LOG_TRIVIAL(error) << "Socket::accept";
+    LOG_ERROR << "Socket::accept";
     switch (savedErrno) {
     case EAGAIN:
     case ECONNABORTED:
@@ -94,10 +93,10 @@ int sockets::accept(int sockfd, struct sockaddr_in *addr) {
     case ENOTSOCK:
     case EOPNOTSUPP:
       // unexpected errors
-      BOOST_LOG_TRIVIAL(fatal) << "unexpected error of ::accept " << savedErrno;
+      LOG_FATAL << "unexpected error of ::accept " << savedErrno;
       break;
     default:
-      BOOST_LOG_TRIVIAL(fatal) << "unknown error of ::accept " << savedErrno;
+      LOG_FATAL << "unknown error of ::accept " << savedErrno;
       break;
     }
   }
@@ -106,12 +105,12 @@ int sockets::accept(int sockfd, struct sockaddr_in *addr) {
 
 void sockets::close(int sockfd) {
   if (::close(sockfd) < 0)
-    BOOST_LOG_TRIVIAL(error) << "sockets::close";
+    LOG_ERROR << "sockets::close";
 }
 
 void sockets::shutdownWrite(int sockfd) {
   if (::shutdown(sockfd, SHUT_WR) < 0)
-    BOOST_LOG_TRIVIAL(error) << "sockets::shutdownWrite";
+    LOG_ERROR << "sockets::shutdownWrite";
 }
 
 /// 获取 addr 结构体中的 addr 和 port
@@ -129,7 +128,7 @@ void sockets::fromHostPort(const char *ip, uint16_t port,
   addr->sin_family = AF_INET;
   addr->sin_port = sockets::hostToNetwork16(port);
   if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0)
-    BOOST_LOG_TRIVIAL(error) << "sockets::fromHostPort";
+    LOG_ERROR << "sockets::fromHostPort";
 }
 
 /// 获取本地 socket 的地址信息
@@ -138,7 +137,7 @@ struct sockaddr_in sockets::getLocalAddr(int sockfd) {
   bzero(&localaddr, sizeof localaddr);
   socklen_t addrlen = sizeof(localaddr);
   if(::getsockname(sockfd, sockaddr_cast(&localaddr), &addrlen) < 0)
-    BOOST_LOG_TRIVIAL(error) << "sockets::getLocalAddr";
+    LOG_ERROR << "sockets::getLocalAddr";
   return localaddr;
 }
 
@@ -147,7 +146,7 @@ struct sockaddr_in sockets::getPeerAddr(int sockfd) {
   bzero(&peeraddr, sizeof peeraddr);
   socklen_t addrlen = sizeof(peeraddr);
   if (::getpeername(sockfd, sockaddr_cast(&peeraddr), &addrlen) < 0) {
-    BOOST_LOG_TRIVIAL(error) << "sockets::getPeerAddr";
+    LOG_ERROR << "sockets::getPeerAddr";
   }
   return peeraddr;
 }

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <netinet/in.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 static const in_addr_t KInaddrAny = INADDR_ANY;
 static_assert(sizeof(InetAddress) == sizeof(struct sockaddr_in));

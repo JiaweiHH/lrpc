@@ -7,7 +7,7 @@
 
 std::string message;
 
-void onConnection(const imitate_muduo::TcpConnectionPtr &conn) {
+void onConnection(const lrpc::net::TcpConnectionPtr &conn) {
   if (conn->connected()) {
     printf("onConnection(): new connection [%s] from %s\n",
            conn->name().c_str(), conn->peerAddress().toHostPort().c_str());
@@ -17,13 +17,13 @@ void onConnection(const imitate_muduo::TcpConnectionPtr &conn) {
   }
 }
 
-void onWriteComplete(const imitate_muduo::TcpConnectionPtr &conn) {
+void onWriteComplete(const lrpc::net::TcpConnectionPtr &conn) {
   conn->send(message);
 }
 
-void onMessage(const imitate_muduo::TcpConnectionPtr &conn,
-               imitate_muduo::Buffer *buf,
-               imitate_muduo::Timestamp recieveTime) {
+void onMessage(const lrpc::net::TcpConnectionPtr &conn,
+               lrpc::net::Buffer *buf,
+               lrpc::net::Timestamp recieveTime) {
   printf("onMessage(): recieved %zd bytes from connection [%s] at %s\n",
          buf->readableBytes(), conn->name().c_str(),
          recieveTime.toFormattedString().c_str());
@@ -40,9 +40,9 @@ int main(int argc, char *argv[]) {
   for (size_t i = 0; i < 127 - 33; ++i) {
     message += line.substr(i, 72) + '\n';
   }
-  imitate_muduo::InetAddress listenAddr(9981);
-  imitate_muduo::EventLoop loop;
-  imitate_muduo::TcpServer server(&loop, listenAddr);
+  lrpc::net::InetAddress listenAddr(9981);
+  lrpc::net::EventLoop loop;
+  lrpc::net::TcpServer server(&loop, listenAddr);
   server.setConnectionCallback(onConnection);
   server.setMessageCallback(onMessage);
   server.setWriteCompleteCallback(onWriteComplete);

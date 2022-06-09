@@ -1,12 +1,13 @@
 #include "Epoller.h"
 #include "Channel.h"
+#include "Logging.h"
 #include <assert.h>
-#include <boost/log/trivial.hpp>
+#include <unistd.h>
 #include <cerrno>
 #include <poll.h>
 #include <sys/epoll.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 static_assert(EPOLLIN == POLLIN);
 static_assert(EPOLLPRI == POLLPRI);
@@ -29,7 +30,7 @@ Epoller::Epoller(EventLoop *loop)
     : ownerloop_(loop), epollfd_(::epoll_create1(EPOLL_CLOEXEC)),
       events_(kInitEventListSize) {
   if (epollfd_ < 0)
-    BOOST_LOG_TRIVIAL(error) << "Epoller::Epoller";
+    LOG_ERROR << "Epoller::Epoller";
 }
 
 Epoller::~Epoller() { ::close(epollfd_); }
@@ -38,17 +39,17 @@ Timestamp Epoller::poll(int timeoutMs, std::vector<Channel *> &activeChannels) {
   // 接受活动 fd，填充到 events_
   int numEvents = ::epoll_wait(epollfd_, &*events_.begin(),
                                static_cast<int>(events_.size()), timeoutMs);
-  auto now = std::chrono::system_clock::now();
+  auto now(Timestamp::now());
   if (numEvents > 0) {
-    BOOST_LOG_TRIVIAL(trace) << numEvents << " events happended";
+    LOG_TRACE << numEvents << " events happended";
     fillActiveChannels(numEvents, activeChannels);
     // 如果当前活动 fd 的数目填满了 events_，那么下次就尝试接受更多的活动 fd
     if (static_cast<size_t>(numEvents) == events_.size())
       events_.resize(events_.size() * 2);
   } else if (numEvents == 0) {
-    BOOST_LOG_TRIVIAL(trace) << " nothing happended";
+    LOG_TRACE << " nothing happended";
   } else {
-    BOOST_LOG_TRIVIAL(error) << "Epoller::poll()";
+    LOG_ERROR << "Epoller::poll()";
   }
   return now;
 }
@@ -73,7 +74,7 @@ void Epoller::fillActiveChannels(int numEvents,
 /// 更新 channel，最后会更新 epoll 中的监听事件
 void Epoller::updateChannel(Channel *channel) {
   assertInLoopThread();
-  BOOST_LOG_TRIVIAL(trace) << "fd = " << channel->fd()
+  LOG_TRACE << "fd = " << channel->fd()
                            << " events = " << channel->events();
   const int index = channel->index();
   if (index == kNew || index == kDeleted) {
@@ -112,7 +113,7 @@ void Epoller::updateChannel(Channel *channel) {
 void Epoller::removeChannel(Channel *channel) {
   assertInLoopThread();
   int fd = channel->fd();
-  BOOST_LOG_TRIVIAL(trace) << "fd = " << fd;
+  LOG_TRACE << "fd = " << fd;
   // 条件检查
   assert(channels_.find(fd) != channels_.end());
   assert(channels_[fd] == channel);
@@ -139,8 +140,8 @@ void Epoller::update(int operation, Channel *channel) {
   int fd = channel->fd();
   if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
     if (operation == EPOLL_CTL_DEL)
-      BOOST_LOG_TRIVIAL(error) << "epoll_ctl op=" << operation << " fd=" << fd;
+      LOG_ERROR << "epoll_ctl op=" << operation << " fd=" << fd;
     else
-      BOOST_LOG_TRIVIAL(fatal) << "epoll_ctl op=" << operation << " fd=" << fd;
+      LOG_FATAL << "epoll_ctl op=" << operation << " fd=" << fd;
   }
 }

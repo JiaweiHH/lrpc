@@ -1,10 +1,11 @@
 #ifndef IMITATE_MUDUO_INETADDRESS_H
 #define IMITATE_MUDUO_INETADDRESS_H
 
-#include <string>
 #include <netinet/in.h>
+#include <string>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 /// 网络地址类
 class InetAddress {
@@ -18,17 +19,12 @@ public:
 
   std::string toHostPort() const;
 
-  const struct sockaddr_in &getSockAddrInet() const {
-    return addr_;
-  }
+  const struct sockaddr_in &getSockAddrInet() const { return addr_; }
 
-  void setSockAddrInet(const struct sockaddr_in &addr) {
-    addr_ = addr;
-  }
+  void setSockAddrInet(const struct sockaddr_in &addr) { addr_ = addr; }
 };
-  
-} // namespace imitate
 
-
+} // namespace net
+} // namespace lrpc
 
 #endif

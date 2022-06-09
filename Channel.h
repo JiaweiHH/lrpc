@@ -5,7 +5,8 @@
 #include "Timestamp.h"
 #include <functional>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class EventLoop;
 
@@ -79,9 +80,9 @@ public:
   int index() const { return index_; }
   void set_index(int idx) { index_ = idx; }
   EventLoop *ownerLoop() const { return loop_; }
-
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

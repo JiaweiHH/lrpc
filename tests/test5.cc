@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-imitate_muduo::EventLoop *g_loop;
+lrpc::net::EventLoop *g_loop;
 int g_flag = 0;
 
 void run4() {
@@ -31,7 +31,7 @@ void run1() {
 int main() {
   printf("main(): pid = %d, flag = %d\n", getpid(), g_flag);
 
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   g_loop = &loop;
 
   loop.runAfter(2, run1);

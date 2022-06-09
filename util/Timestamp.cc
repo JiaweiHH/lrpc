@@ -8,7 +8,7 @@
 
 #include <boost/static_assert.hpp>
 
-using namespace imitate_muduo;
+using namespace lrpc::util;
 
 BOOST_STATIC_ASSERT(sizeof(Timestamp) == sizeof(int64_t));
 

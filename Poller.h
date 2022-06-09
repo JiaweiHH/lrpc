@@ -6,9 +6,10 @@
 #include <map>
 #include <vector>
 
-struct pollfd;  // 来自 poll.h
+struct pollfd; // 来自 poll.h
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Channel;
 
@@ -33,13 +34,12 @@ public:
   Timestamp poll(int timeoutMS, std::vector<Channel *> &activeChannels);
 
   void updateChannel(Channel *channel);
-  void removeChannel(Channel* channel);
+  void removeChannel(Channel *channel);
 
-  void assertInLoopThread() {
-    ownerloop_->assertInLoopThread();
-  }
+  void assertInLoopThread() { ownerloop_->assertInLoopThread(); }
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

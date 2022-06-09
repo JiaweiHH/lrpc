@@ -17,14 +17,14 @@
 void threadFunc() {
   std::cout << std::this_thread::get_id() << "\n";
   // printf("threadFunc(): %d\n", std::this_thread::get_id());
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   loop.loop();
 }
 
 int main() {
   std::cout << std::this_thread::get_id() << "\n";
   // printf("main(): %d\n", std::this_thread::get_id());
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   std::thread t(threadFunc);
   loop.loop();
   t.join();

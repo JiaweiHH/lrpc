@@ -16,8 +16,8 @@ int main() {
   auto tid = std::this_thread::get_id();
   printf("main(): pid = %d, tid = 0x%lx\n", getpid(), *(uint64_t *)&tid);
 
-  imitate_muduo::EventLoopThread loopThread;
-  imitate_muduo::EventLoop *loop = loopThread.startLoop();
+  lrpc::net::EventLoopThread loopThread;
+  lrpc::net::EventLoop *loop = loopThread.startLoop();
   loop->runInLoop(runInThread);
   std::this_thread::sleep_for(1s);
   loop->runAfter(2, runInThread);

@@ -3,7 +3,7 @@
 #include "EventLoopThread.h"
 #include <assert.h>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop)
     : baseLoop_(baseLoop), started_(false), numThreads_(0), next_(0) {}

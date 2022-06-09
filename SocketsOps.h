@@ -4,7 +4,8 @@
 #include <arpa/inet.h>
 #include <endian.h>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 /// network tools
 namespace sockets {
@@ -42,6 +43,7 @@ int getSocketError(int sockfd);
 bool isSelfConnect(int sockfd);
 } // namespace sockets
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

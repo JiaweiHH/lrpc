@@ -7,19 +7,19 @@
 #include <cstring>
 #include <string>
 
-imitate_muduo::EventLoop *g_loop;
+lrpc::net::EventLoop *g_loop;
 
-void timeout(imitate_muduo::Timestamp recieveTime) {
+void timeout(lrpc::net::Timestamp recieveTime) {
   std::cout << recieveTime.toFormattedString() << "\n";
   g_loop->quit();
 }
 
 int main() {
-  imitate_muduo::EventLoop loop;
+  lrpc::net::EventLoop loop;
   g_loop = &loop;
 
   int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-  imitate_muduo::Channel channel(&loop, timerfd);
+  lrpc::net::Channel channel(&loop, timerfd);
   channel.setReadCallback(timeout);
   channel.enableReading();
 

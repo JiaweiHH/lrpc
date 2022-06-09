@@ -2,9 +2,8 @@
 #include "EventLoop.h"
 #include "InetAddress.h"
 #include "SocketsOps.h"
-#include <boost/log/trivial.hpp>
 
-using namespace imitate_muduo;
+using namespace lrpc::net;
 
 Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr)
     : loop_(loop), acceptSocket_(sockets::createNonblockingOrDie()),

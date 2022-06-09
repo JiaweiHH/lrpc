@@ -6,7 +6,8 @@
 #include <functional>
 #include <memory>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Channel;
 class EventLoop;
@@ -63,6 +64,7 @@ public:
 };
 typedef std::shared_ptr<Connector> ConnectorPtr;
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif

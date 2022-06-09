@@ -7,7 +7,8 @@
 #include <memory>
 #include <string>
 
-namespace imitate_muduo {
+namespace lrpc {
+namespace net {
 
 class Channel;
 class EventLoop;
@@ -30,7 +31,7 @@ private:
   void handleWrite();
   void handleClose();
   void handleError();
-  
+
   void sendInLoop(const std::string &message);
   void shutdownInLoop();
 
@@ -73,7 +74,9 @@ public:
   }
   void setMessageCallback(const MessageCallback &cb) { messageCallback_ = cb; }
   void setCloseCallback(const CloseCallback &cb) { closeCallback_ = cb; }
-  void setWriteCompleteCallback(const WriteCompleteCallback &cb) { writeCompleteCallback_ = cb; };
+  void setWriteCompleteCallback(const WriteCompleteCallback &cb) {
+    writeCompleteCallback_ = cb;
+  };
 
   void connecEstablished(); // 连接建立
   void connectDestoryed();  // 连接断开
@@ -81,6 +84,7 @@ public:
   std::string stateEnumToStr(StateE state);
 };
 
-} // namespace imitate_muduo
+} // namespace net
+} // namespace lrpc
 
 #endif
