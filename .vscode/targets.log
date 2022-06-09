@@ -1,6 +1,4 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
-make: *** No rule to make target 'all'.  Stop.
-
 # GNU Make 4.1
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2014 Free Software Foundation, Inc.
@@ -8,7 +6,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jun  9 07:19:08 2022
+# Make data base, printed on Thu Jun  9 07:31:51 2022
 
 # Variables
 
@@ -33,7 +31,7 @@ PLATFORMIO_IDE = 2.4.3
 # default
 MAKE_VERSION := 4.1
 # makefile
-CURDIR := /home/parallels/Desktop/muduo/imitate_muduo
+CURDIR := /home/parallels/Desktop/lrpc
 # makefile
 SHELL = /bin/sh
 # environment
@@ -73,9 +71,9 @@ all_proxy = socks5://192.168.3.73:7890
 # environment
 VSCODE_PIPE_LOGGING = true
 # environment
-PWD = /home/parallels/Desktop/muduo/imitate_muduo
+PWD = /home/parallels/Desktop/lrpc
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-7815e98e-f568-4678-8ab5-f617541e88e8.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-436c7448-8f67-43fc-b2bc-b643ecea3cab.sock
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -87,7 +85,7 @@ LESSCLOSE = /usr/bin/lesspipe %s %s
 # environment
 LOGNAME = parallels
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # automatic
 +F = $(notdir $+)
 # environment
@@ -97,7 +95,7 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # environment
 MAKELEVEL := 0
 # environment
-PLATFORMIO_PATH = /home/parallels/.platformio/penv/bin:/home/parallels/.platformio/penv:/home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+PLATFORMIO_PATH = /home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 # default
 MAKE = $(MAKE_COMMAND)
 # default
@@ -175,7 +173,7 @@ VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 
 # Directories
 
-# . (device 2049, inode 4741333): 42 files, no impossibilities.
+# . (device 2049, inode 2501063): 42 files, no impossibilities.
 
 # 42 files, no impossibilities in 1 directories.
 
@@ -233,6 +231,8 @@ GNUmakefile:
 # strcache performance: lookups = 53 / hit rate = 5%
 # hash-table stats:
 # Load=50/8192=1%, Rehash=0, Collisions=1/53=2%
-# Finished Make data base on Thu Jun  9 07:19:08 2022
+# Finished Make data base on Thu Jun  9 07:31:51 2022
 
  
+make: *** No rule to make target 'all'.  Stop.
+
