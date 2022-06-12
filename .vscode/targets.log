@@ -1,4 +1,6 @@
 make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+make: *** No rule to make target 'all'.  Stop.
+
 # GNU Make 4.1
 # Built for x86_64-pc-linux-gnu
 # Copyright (C) 1988-2014 Free Software Foundation, Inc.
@@ -6,7 +8,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Jun  9 07:31:51 2022
+# Make data base, printed on Sun Jun 12 01:05:42 2022
 
 # Variables
 
@@ -95,7 +97,7 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # environment
 MAKELEVEL := 0
 # environment
-PLATFORMIO_PATH = /home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+PLATFORMIO_PATH = /home/parallels/.platformio/penv/bin:/home/parallels/.platformio/penv:/home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 # default
 MAKE = $(MAKE_COMMAND)
 # default
@@ -173,9 +175,9 @@ VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 
 # Directories
 
-# . (device 2049, inode 2501063): 42 files, no impossibilities.
+# . (device 2049, inode 2501063): 11 files, no impossibilities.
 
-# 42 files, no impossibilities in 1 directories.
+# 11 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -225,14 +227,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 50 / storage = 561 B / avg = 11 B
-# current buf: size = 8162 B / used = 561 B / count = 50 / avg = 11 B
+# strcache buffers: 1 (0) / strings = 19 / storage = 146 B / avg = 7 B
+# current buf: size = 8162 B / used = 146 B / count = 19 / avg = 7 B
 
-# strcache performance: lookups = 53 / hit rate = 5%
+# strcache performance: lookups = 22 / hit rate = 13%
 # hash-table stats:
-# Load=50/8192=1%, Rehash=0, Collisions=1/53=2%
-# Finished Make data base on Thu Jun  9 07:31:51 2022
+# Load=19/8192=0%, Rehash=0, Collisions=1/22=5%
+# Finished Make data base on Sun Jun 12 01:05:42 2022
 
  
-make: *** No rule to make target 'all'.  Stop.
-

@@ -84,6 +84,7 @@ void Poller::updateChannel(Channel *channel) {
     assert(channels_[channel->fd()] == channel);
 
     int idx = channel->index();
+    // LOG_INFO << "channel idx = " << idx << ", pollfds size = " << pollfds_.size();
     assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
 
     struct pollfd &pfd = pollfds_[idx];
@@ -115,7 +116,7 @@ void Poller::removeChannel(Channel *channel) {
   if (static_cast<size_t>(idx) == pollfds_.size() - 1) {
     pollfds_.pop_back();
   } else {
-    int channelAtEnd = pollfds_.size() - 1;
+    int channelAtEnd = pollfds_.back().fd;
     std::iter_swap(pollfds_.begin() + idx, pollfds_.end() - 1);
     if (channelAtEnd < 0)
       channelAtEnd = -channelAtEnd - 1;

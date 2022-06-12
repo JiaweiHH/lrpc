@@ -100,6 +100,8 @@ void Connector::connecting(int sockfd) {
   channel_->enableWriting();
 }
 
+/// 连接建立成功之后会移除 sockfd 的 channel，不再监听连接建立事件
+/// 之后会对 sockfd 创建一个新的 channel 用来监听读写事件
 int Connector::removeAndResetChannel() {
   channel_->disableAll();
   loop_->removeChannel(channel_.get());

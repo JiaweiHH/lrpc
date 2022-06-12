@@ -98,6 +98,7 @@ void TcpConnection::handleWrite() {
     ssize_t n = ::write(channel_->fd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
     if (n > 0) {
       outputBuffer_.retrieve(n);
+      // 如果数据写完了，则需要关闭 kWriteEvent 事件，并执行 writeCompleteCallback_ 回调
       if (outputBuffer_.readableBytes() == 0) {
         channel_->disableWriting();
         if (writeCompleteCallback_) {

@@ -1,5 +1,5 @@
-#include "../Connector.h"
-#include "../EventLoop.h"
+#include "Connector.h"
+#include "EventLoop.h"
 #include <cstdio>
 
 lrpc::net::EventLoop *g_loop;

@@ -2,6 +2,7 @@
 #define IMITATE_MUDUO_CALLBACK_H
 
 #include "Timestamp.h"
+#include "Buffer.h"
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -12,7 +13,6 @@ namespace net {
 using namespace util;
 
 class TcpConnection;
-class Buffer;
 
 // using Timestamp = std::chrono::system_clock::time_point;
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;

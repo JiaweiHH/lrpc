@@ -1,9 +1,9 @@
-BINARIES = test11 test12
-LIB_SRC = ../Channel.cc ../EventLoop.cc ../Poller.cc ../Timer.cc ../TimerQueue.cc ../EventLoopThread.cc \
-../SocketsOps.cc ../Socket.cc ../InetAddress.cc ../Acceptor.cc ../TcpConnection.cc ../EventLoopThreadPool.cc \
-../TcpServer.cc ../Buffer.cc ../util/Timestamp.cc ../Connector.cc ../util/LogFile.cc ../util/LogStream.cc ../util/Logging.cc
+BINARIES = test8 test9 test10 test11 test12 test13
+LIB_SRC = ../net/Channel.cc ../net/EventLoop.cc ../net/Poller.cc ../net/Timer.cc ../net/TimerQueue.cc ../net/EventLoopThread.cc \
+../net/SocketsOps.cc ../net/Socket.cc ../net/InetAddress.cc ../net/Acceptor.cc ../net/TcpConnection.cc ../net/EventLoopThreadPool.cc \
+../net/TcpServer.cc ../net/TcpClient.cc ../util/Buffer.cc ../util/Timestamp.cc ../net/Connector.cc ../util/LogFile.cc ../util/LogStream.cc ../util/Logging.cc
 
-CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -I.. -I../util
+CXXFLAGS = -std=c++17 -O0 -g  -Wall -pthread -I../net -I../util
 LDFLAGS = -lpthread
 
 all: $(BINARIES)
@@ -23,6 +23,7 @@ test9: test9.cc
 test10: test10.cc
 test11: test11.cc
 test12: test12.cc
+test13: test13.cc
 
 clean:
 	rm -rf $(BINARIES) core

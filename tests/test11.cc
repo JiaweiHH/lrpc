@@ -21,8 +21,7 @@ void onWriteComplete(const lrpc::net::TcpConnectionPtr &conn) {
   conn->send(message);
 }
 
-void onMessage(const lrpc::net::TcpConnectionPtr &conn,
-               lrpc::net::Buffer *buf,
+void onMessage(const lrpc::net::TcpConnectionPtr &conn, lrpc::net::Buffer *buf,
                lrpc::net::Timestamp recieveTime) {
   printf("onMessage(): recieved %zd bytes from connection [%s] at %s\n",
          buf->readableBytes(), conn->name().c_str(),

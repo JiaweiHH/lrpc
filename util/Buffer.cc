@@ -4,14 +4,14 @@
 #include <memory.h>
 #include <sys/uio.h>
 
-using namespace lrpc::net;
+using namespace lrpc::util;
 
 /// 直接从文件读取数据到 buffer
 ssize_t Buffer::readFd(int fd, int *savedErrno) {
   // 通过 readv 将数据读到不连续的内存
   char extrabuf[65536];
   struct iovec vec[2];
-  const size_t writable = writeableBytes();
+  const size_t writable = writableBytes();
   vec[0].iov_base = begin() + writerIndex_;
   vec[0].iov_len = writable;
   vec[1].iov_base = extrabuf;
