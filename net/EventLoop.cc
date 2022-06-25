@@ -1,15 +1,15 @@
 #include "EventLoop.h"
 #include "Channel.h"
 #include "Epoller.h"
+#include "Logging.h"
 #include "Poller.h"
 #include "TimerQueue.h"
 #include "signal.h"
-#include "Logging.h"
 #include <assert.h>
-#include <unistd.h>
 #include <poll.h>
 #include <sys/eventfd.h>
 #include <thread>
+#include <unistd.h>
 
 using namespace lrpc::net;
 
@@ -32,9 +32,7 @@ static int createEventfd() {
 /// !@param SIGPIPE write on a pipe with no reader
 class IgnoreSigPipe {
 public:
-  IgnoreSigPipe() {
-    ::signal(SIGPIPE, SIG_IGN);
-  }
+  IgnoreSigPipe() { ::signal(SIGPIPE, SIG_IGN); }
 };
 IgnoreSigPipe initObj;
 
@@ -104,8 +102,8 @@ void EventLoop::quit() {
   //    因为在 IO 线程中执行 quit 就说明此时线程正在执行时间回调函数
   //    在完成事件回调函数之后会重新判断循环的 quit_
   // 2. 但是在别的线程就需要 wakeup
-  //    因为此时 IO 线程可能睡眠在 ::poll 调用中，wakeup 之后可以唤醒 ::poll 中的睡眠
-  //    其实就算没有 wakeup 也会超时唤醒
+  //    因为此时 IO 线程可能睡眠在 ::poll 调用中，wakeup 之后可以唤醒 ::poll
+  //    中的睡眠 其实就算没有 wakeup 也会超时唤醒
   if (!isInLoopThread())
     wakeup();
 }
@@ -167,9 +165,9 @@ void EventLoop::queueInLoop(const Functor &cb) {
   }
   // 1. 如果调用 queueInLoop 的不是 IO 线程
   // 2. 如果此时正在执行 pending functor
-  // 第二点的原因是，在 doPendingFunctors 中执行 functor 的时候也可能会调用 queueInLoop，
-  // 此时如果不 wakeup，则在下一轮的 ::poll 中就不能及时得到有新的 functor 的事件信息，
-  // 那么新的 functor 也就不能及时得到执行了
+  // 第二点的原因是，在 doPendingFunctors 中执行 functor 的时候也可能会调用
+  // queueInLoop， 此时如果不 wakeup，则在下一轮的 ::poll 中就不能及时得到有新的
+  // functor 的事件信息， 那么新的 functor 也就不能及时得到执行了
   if (!isInLoopThread() || callingPendingFunctors_)
     wakeup();
 }
@@ -211,20 +209,30 @@ void EventLoop::wakeup() {
 }
 /// 读取 eventfd
 void EventLoop::handleRead() {
-  // note: 这里没有选择在 handleRead 中执行 doPendingFunctors 而是放到 loop 中，原因如下
+  // note: 这里没有选择在 handleRead 中执行 doPendingFunctors 而是放到 loop
+  // 中，原因如下
   // 1. 原因在于如果在 handleRead 中执行 doPendingFunctors，
   //    那么在 IO 线程内注册了回调函数并且没有调用 EventLoop::wakeup()，
   //    回调函数不会被立即得到执行，必须等到 wakeup 被调用后才能执行
   // 2. pending functor 的优先级低于其他事件
-  // 3. 如果 doPendingFunctors() 放到 EventLoop::handleRead() 中，就必须调用weakup()，
-  //    这样流程就涉及三个系统调用 write->poll->read，在 IO 线程内注册回调函数这种情况下，其用不着花费三个系统
-  //    放到 loop 中就可以在 IO 线程中注册回调的时候省略三个系统调用
+  // 3. 如果 doPendingFunctors() 放到 EventLoop::handleRead()
+  // 中，就必须调用weakup()，
+  //    这样流程就涉及三个系统调用 write->poll->read，在 IO
+  //    线程内注册回调函数这种情况下，其用不着花费三个系统 放到 loop 中就可以在
+  //    IO 线程中注册回调的时候省略三个系统调用
   uint64_t one = 1;
-  ssize_t n = ::read(wakeupFd_, &one, sizeof one); 
+  ssize_t n = ::read(wakeupFd_, &one, sizeof one);
   if (n != sizeof one)
     LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of 8";
 }
 
-void EventLoop::cancel(TimerId timerId) {
-  timerQueue_->cancel(timerId);
+void EventLoop::cancel(TimerId timerId) { timerQueue_->cancel(timerId); }
+
+void EventLoop::Schedule(std::function<void()> f) { Execute(std::move(f)); }
+
+void EventLoop::ScheduleLater(std::chrono::milliseconds duration,
+                              std::function<void()> f) {
+  double delay = duration.count();
+  auto when = addTime(Timestamp::now(), delay / 1000.0);
+  timerQueue_->addTimer(f, when, 0.0);
 }

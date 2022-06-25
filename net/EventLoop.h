@@ -1,8 +1,10 @@
 #ifndef IMITATE_MUDUO_EVENTLOOP_H
 #define IMITATE_MUDUO_EVENTLOOP_H
 
+#include "Scheduler.h"
 #include "TimerId.h"
 #include "Timestamp.h"
+#include "future.h"
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -19,7 +21,7 @@ class Poller;
 class TimerQueue;
 class Epoller;
 
-class EventLoop {
+class EventLoop : public Scheduler {
 public:
   using TimerCallback = std::function<void()>;
   using Functor = std::function<void()>;
@@ -49,6 +51,42 @@ public:
   TimerId runAt(const Timestamp &time, const TimerCallback &cb);
   TimerId runAfter(double delay, const TimerCallback &cb);
   TimerId runEvery(double interval, const TimerCallback &cb);
+
+  /**
+   * @brief Execute 是为了 Future.then 设计的
+   * SFINAE 决定执行版本 1 还是版本 2
+   * 版本 1 返回值为 Future<T>，版本 2 返回值为 Future<void>
+   *
+   * @tparam F
+   * @tparam Args
+   * @tparam std::enable_if<
+   * !std::is_void<typename std::result_of<F(Args...)>::type>::value,
+   * void>::type
+   * @tparam std::enable_if<
+   * !std::is_void<typename std::result_of<F(Args...)>::type>::value,
+   * void>::type,
+   * typename
+   * @return Future<typename std::result_of<F(Args...)>::type>
+   * TODO 第四个参数需要吗？
+   */
+  /// 版本 1
+  template <typename F, typename... Args,
+            typename = typename std::enable_if<
+                !std::is_void<typename std::result_of<F(Args...)>::type>::value,
+                void>::type,
+            typename = void>
+  auto Execute(F &&, Args &&...)
+      -> Future<typename std::result_of<F(Args...)>::type>;
+  /// 版本 2
+  template <typename F, typename... Args,
+            typename = typename std::enable_if<
+                std::is_void<typename std::result_of<F(Args...)>::type>::value,
+                void>::type>
+  auto Execute(F &&, Args &&...) -> Future<void>;
+
+  void Schedule(std::function<void()>) override;
+  void ScheduleLater(std::chrono::milliseconds duration,
+                     std::function<void()>) override;
 
   // 更新 EventLoop 关心的文件描述符事件
   void updateChannel(Channel *channel);
@@ -88,6 +126,69 @@ private:
   void handleRead();
   void doPendingFunctors();
 };
+
+template <typename F, typename... Args, typename, typename>
+Future<typename std::result_of<F(Args...)>::type>
+EventLoop::Execute(F &&f, Args &&...args) {
+  using resultType = typename std::result_of<F(Args...)>::type;
+
+  Promise<resultType> promise;
+  auto fut = promise.getFuture();
+  if (isInLoopThread()) {
+    promise.setValue(std::forward<F>(f)(std::forward<Args>(args)...));
+  } else {
+    auto task = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+    auto func = [t = std::move(task), pm = std::move(promise)]() mutable {
+      try {
+        pm.setValue(Result<resultType>(t()));
+      } catch (...) {
+        pm.setException(std::current_exception());
+      }
+    };
+
+    {
+      std::lock_guard<std::mutex> lk(mutex_);
+      pendingFunctors_.emplace_back(std::move(func));
+    }
+
+    wakeup();
+  }
+
+  return fut;
+}
+
+template <typename F, typename... Args, typename>
+Future<void> EventLoop::Execute(F &&f, Args &&...args) {
+  using resultType = typename std::result_of<F(Args...)>::type;
+  static_assert(std::is_void<resultType>::value, "must be void");
+
+  Promise<void> promise;
+  auto fut = promise.getFuture();
+  if (isInLoopThread()) {
+    std::forward<F>(f)(std::forward<Args>(args)...);
+    promise.setValue();
+  } else {
+    auto task = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+    auto func = [t = std::move(task), pm = std::move(promise)]() mutable {
+      try {
+        t();
+        pm.setValue();
+      } catch (...) {
+        pm.setException(std::current_exception());
+      }
+    };
+
+    {
+      std::lock_guard<std::mutex> lk(mutex_);
+      pendingFunctors_.emplace_back(std::move(func));
+    }
+
+    wakeup();
+  }
+
+  return fut;
+}
+
 } // namespace net
 } // namespace lrpc
 
