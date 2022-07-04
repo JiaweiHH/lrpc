@@ -1,13 +1,14 @@
 #ifndef LRPC_RESULT_H
 #define LRPC_RESULT_H
 
+#include "result.h"
 #include <assert.h>
 #include <cstdint>
 #include <exception>
 
 namespace lrpc {
 
-template <typename T = void> class Result {
+template <typename T> class Result {
 public:
   enum class State {
     None,
@@ -18,7 +19,7 @@ public:
   /// @brief 普通构造函数
   Result() : state_(State::None) {}
   Result(const T &val) : state_(State::None), value_(val) {}
-  Result(T &&val) : state_(State::Value), value_(val) {}
+  Result(T &&val) : state_(State::Value), value_(std::move(val)) {}
   Result(std::exception_ptr e)
       : state_(State::Exception), exception_(std::move(e)) {}
   /// @brief 移动构造函数
@@ -93,20 +94,23 @@ public:
 
   /// @brief 获取 exception_
   const std::exception_ptr &getException() const & {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return exception_;
   }
   std::exception_ptr &getException() & {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return exception_;
   }
   std::exception_ptr &&getException() && {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return std::move(exception_);
   }
 
   bool hasValue() const { return state_ == State::Value; }
-  bool hasError() const { return state_ == State::Exception; }
+  bool hasException() const { return state_ == State::Exception; }
 
   /// @brief 检查 state_ 状态，如果保存了异常则再次抛出，以便外面可以捕获
   struct UninitializedResult {};
@@ -178,15 +182,18 @@ public:
   }
 
   const std::exception_ptr &getException() const & {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return exception_;
   }
   std::exception_ptr &getException() & {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return exception_;
   }
   std::exception_ptr &&getException() && {
-    check();
+    if (!hasException())
+      throw std::runtime_error("Not exception state");
     return std::move(exception_);
   }
 

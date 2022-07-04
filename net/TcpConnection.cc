@@ -35,7 +35,7 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &nameArg,
                              const InetAddress &peerAddr)
     : loop_(loop), name_(nameArg), state_(StateE::kConnecting),
       socket_(new Socket(sockfd)), channel_(new Channel(loop, sockfd)),
-      localAddr_(localAddr), peerAddr_(peerAddr) {
+      localAddr_(localAddr), peerAddr_(peerAddr), uniqueId_(0) {
   LOG_DEBUG << "TcpConnection::ctor[" << name_ << "] at " << this
                            << " fd = " << sockfd;
   channel_->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
@@ -56,8 +56,8 @@ void TcpConnection::connecEstablished() {
   assert(state_ == StateE::kConnecting);
   setState(StateE::kConnected);
   channel_->enableReading();
-
-  connectionCallback_(shared_from_this());
+  if (connectionCallback_)
+    connectionCallback_(shared_from_this());
 }
 
 /// TcpConnection 析构前最后调用的一个函数，通知用户连接已断开
@@ -69,12 +69,16 @@ void TcpConnection::connectDestoryed() {
   setState(StateE::kDisConnected);
   // client 断开链接，所以取消 client socket 上的所有事件
   channel_->disableAll();
-  connectionCallback_(shared_from_this());
+  
+  // if (connectionCallback_)
+  //   connectionCallback_(shared_from_this());
+
   // 从 EventLoop 中移除
   loop_->removeChannel(channel_.get());
 }
 
 /// 客户端有新的数据发送过来，服务端的 client socket 可读
+/// 读取这部分数据到 inputBuffer_
 void TcpConnection::handleRead(Timestamp recieveTime) {
   int savedErrno = 0;
   ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
@@ -149,7 +153,7 @@ void TcpConnection::shutdownInLoop() {
 
 /// 发送数据
 /// 如果在非 IO 线程调用，会把 message 复制一份传递给 IO 线程中的 sendInLoop 来发送
-void TcpConnection::send(const std::string &message) {
+bool TcpConnection::send(const std::string &message) {
   if (state_ == StateE::kConnected) {
     if (loop_->isInLoopThread()) {
       sendInLoop(message);
@@ -157,7 +161,12 @@ void TcpConnection::send(const std::string &message) {
       // message 会被移动到 std::bind 对象的成员变量中
       loop_->runInLoop(std::bind(&TcpConnection::sendInLoop, this, std::move(message)));
     }
+    return true;
   }
+  return false;
+}
+bool TcpConnection::send(Buffer &message) {
+  return send(message.retrieveAsString());
 }
 void TcpConnection::sendInLoop(const std::string &message) {
   loop_->assertInLoopThread();

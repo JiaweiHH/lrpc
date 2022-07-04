@@ -13,7 +13,7 @@ const int Connector::kMaxRetryDelayMs;
 Connector::Connector(EventLoop *loop, const InetAddress &serverAddr)
     : loop_(loop), serverAddr_(serverAddr), connect_(false),
       state_(States::kDisconnected), retryDelayMs_(kInitRetryDelayMs) {
-  LOG_DEBUG << "ctor[" << this << "]";
+  LOG_DEBUG << "ctor[" << this << "], address " << serverAddr.toHostPort();
 }
 Connector::~Connector() {
   LOG_DEBUG << "dtor[" << this << "]";
@@ -24,7 +24,7 @@ Connector::~Connector() {
 /// @brief 不断尝试建立连接，每次 retry 延迟时间加倍直到最大延迟时间
 void Connector::start() {
   connect_ = true;
-  loop_->runInLoop(std::bind(&Connector::startInLoop, this));
+  loop_->runInLoop(std::bind(&Connector::startInLoop, shared_from_this()));
 }
 void Connector::startInLoop() {
   loop_->assertInLoopThread();

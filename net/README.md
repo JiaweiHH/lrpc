@@ -173,3 +173,11 @@ Epoll 接口和 Poll 基本完全一样。需要注意的是，Epoll 中的 even
 - kAdded. 添加到 Epoll::channels_ 数组中，并且在 epollfd 中监听了 Channel 中的文件描述符
 - kDeleted. 从 epoll 监听中移除了 Channel 中的文件描述符，但是还没有从 channels_ 数组中移除 Channel
 
+### 随记
+
+客户端 Callback -> TcpClient::Callback -> 客户端执行 connect -> 连接建立成功，创建 TcpConnection，设置 TcpConnection Callback 为 TcpClient::Callback，也就是客户端设置的 Callback
+
+Channel 的 Callback 设置为 TcpConnection::handleRead/handleWrite/...
+
+EventLoop 执行事件循环，通过 Poller/Epoller 获取响应的 Channel -> 执行 Channel 的回调函数，也就是 TcpConnection::handle...，处理 Read/Write 等事件的逻辑 -> 执行 TcpConnection::Callback 也就是客户端设置好的回调函数
+

@@ -13,6 +13,8 @@ public:
   TimerId(Timer *timer = nullptr, int64_t seq = 0)
       : timer_(timer), sequence_(seq) {}
   friend class TimerQueue;
+  bool empty() const { return timer_ == nullptr; }
+  void reset() { timer_ = nullptr; }
 
 private:
   // 需要同时根据 Timer* 地址和 seq 才能唯一确定定时器

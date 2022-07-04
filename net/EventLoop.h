@@ -2,6 +2,7 @@
 #define IMITATE_MUDUO_EVENTLOOP_H
 
 #include "Scheduler.h"
+#include "Logging.h"
 #include "TimerId.h"
 #include "Timestamp.h"
 #include "future.h"
@@ -104,6 +105,9 @@ public:
     return std::this_thread::get_id() == threadId_;
   }
 
+  int getId() const { return local_id_; }
+  unsigned int getConnectionId() const { return ++s_id; }
+
   static EventLoop *getEventLoopOfCurrentThread();
 
 private:
@@ -120,6 +124,10 @@ private:
   std::vector<Channel *> activeChannels_; // 记录每一次调用 poll 的活动事件
   std::mutex mutex_; // 在多线程间保护 pendingFunctors_
   std::vector<Functor> pendingFunctors_;
+
+  static std::atomic<int> sequenceId;    // 用来给 EventLoop 编号
+  static thread_local unsigned int s_id; // 用来给 TcpConnection 编号
+  int local_id_;                         // EventLoop 编号
 
   // 报错
   void abortNotInLoopThread();

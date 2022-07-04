@@ -23,7 +23,7 @@ void EventLoopThreadPool::start() {
 
 /// server 线程选取一个线程来管理新连接的事件
 EventLoop *EventLoopThreadPool::getNextLoop() {
-  baseLoop_->assertInLoopThread();
+  // baseLoop_->assertInLoopThread();
   EventLoop *loop = baseLoop_;
   if (!loops_.empty()) {
     // round-robin

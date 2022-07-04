@@ -22,7 +22,7 @@ TcpServer::~TcpServer() {}
 
 void TcpServer::setThreadNum(int numThreads) {
   assert(0 <= numThreads);
-  threadPool_->setThraedNum(numThreads);
+  threadPool_->setThreadNum(numThreads);
 }
 
 /// 将 socket 的 listen 通过 runInLoop 注册到 EventLoop 中去
@@ -68,7 +68,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr) {
 
 /// 对比单线程的区别在于
 /// 现在 removeConnection 是在 TcpConnection 自己的线程被调用的，
-/// 但是所有的 connections 都是在 server 线程管理的，所以需要把它已到 server 线程执行
+/// 但是所有的 connections 都是在 server 线程管理的，所以需要把它移到 server 线程执行
 void TcpServer::removeConnection(const TcpConnectionPtr &conn) {
   loop_->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, conn));
 }

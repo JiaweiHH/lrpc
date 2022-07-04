@@ -239,6 +239,63 @@ public:
   }
 
   /**
+   * @brief 如果当前 Future 的内部型别还是 Future，则进行解包
+   * 注意解包会创建一个新的 new future，这里的逻辑是：
+   * 1. current future 准备就绪执行 callback
+   * 2. callback 设置 inner future 的 callback
+   * 3. inner future 准备就绪执行 callback
+   * 4. callback 负责设置 new promise
+   * 5. 外部接收到 new future 准备就绪
+   *
+   * @tparam V: Future<> 型别
+   * @return std::enable_if<isFuture<V>::value, V>::type
+   */
+  template <typename V = T>
+  typename std::enable_if<isFuture<V>::value, V>::type unwrap() {
+    using InnerType = typename isFuture<V>::Inner;
+    static_assert(std::is_same<T, Future<InnerType>>::value, "Kidding me?");
+
+    // 返回一个新的 future
+    Promise<InnerType> promise;
+    Future<InnerType> fut = promise.getFuture();
+
+    std::lock_guard<std::mutex> lk(state_->mutex_);
+    if (state_->progress_ == Progress::Timeout) {
+      // 1. 当前 Future 已经超时了，这个时候返回内部 Future 没有意义
+      // 需要抛出异常
+      throw std::runtime_error("Wrong state : Timeout");
+    } else if (state_->progress_ == Progress::Done) {
+      // 2. 当前 Future 已经完成了，这个时候返回内部 Future
+      try {
+        auto innerFuture = std::move(state_->value_);
+        return std::move(innerFuture.getValue());
+      } catch (const std::exception &e) {
+        return makeExceptionFuture<InnerType>(std::current_exception());
+      }
+    } else {
+      // 3. 当前 future 还没有准备就绪，设置回调函数
+      // 当 current future 准备就绪的时候，会执行
+      _setCallback([pm = std::move(promise)](
+                       typename ResultWrapper<V>::Type &&innerFuture) mutable {
+        try {
+          // 获取 curent future 准备就绪之后设置的 future
+          V future = std::move(innerFuture); // 隐式类型转换
+          // 设置该 future 的 callback 函数，当这个 future 准备就绪的时候，
+          // 将这个 future 的值设置到返回给客户端的 promise
+          future._setCallback(
+              [pm = std::move(pm)](
+                  typename ResultWrapper<InnerType>::Type &&r) mutable {
+                pm.setValue(std::move(r));
+              });
+        } catch (...) {
+          pm.setException(std::current_exception());
+        }
+      });
+    }
+    return fut;
+  }
+
+  /**
    * @brief 指定 future 就绪之后需要执行的任务. 可以选择在某个指定的 Scheduler
    * 上执行后续任务，如果没有特别指定 sched 的话，默认在当前 Scheduler 继续执行
    *
@@ -292,7 +349,7 @@ public:
   void onTimeout(std::chrono::milliseconds duration, TimeoutCallback f, Scheduler *sched) {
     sched->ScheduleLater(duration, [state = state_, cb = std::move(f)]() mutable {
       {
-        // 如果 state_ 的状态不是 None，则说明在超时之前要么已经被提取 value 了
+        // 如果 state_ 的状态不是 None，则说明在超时之前要么已经被提取 value 了，此时不执行 callback
         // 要么发生异常了，要么已经有 value 但是还没有被提取
         std::lock_guard<std::mutex> lk(state->mutex_);
         if (state->progress_ != Progress::None)
@@ -400,12 +457,12 @@ private:
    * @param sched
    * @param f : then 的回调函数
    * @return std::enable_if<R::isReturnsFuture::value,
-   * typename R::ReturnFutureType>::type
+   * typename R::returnFutureType>::type
    * 使用 Future<> 包装的函数返回值
    */
   template <typename F, typename R, typename... Args>
   typename std::enable_if<R::isReturnsFuture::value,
-                          typename R::ReturnFutureType>::type
+                          typename R::returnFutureType>::type
   _thenImpl(Scheduler *sched, F &&f, ResultOfWrapper<F, Args...>) {
     static_assert(sizeof...(Args) <= 1, "then must take zero/one argument");
 
@@ -423,7 +480,7 @@ private:
       // 2. 当前 future 执行完毕，并且还没有被获取
       typename ResultWrapper<T>::Type r;
       try {
-        r = std::move(state_->value);
+        r = std::move(state_->value_);
       } catch (const std::exception &e) {
         r = decltype(r)(std::current_exception());
       }
@@ -456,6 +513,7 @@ private:
   }
 
   /// @brief 设置 state_ 的 then_ 回调函数，promise 在 set 的时候会执行
+  /// then_ 函数必须接收 future 内部型别类型的参数 (Result<T>)
   void
   _setCallback(std::function<void(typename ResultWrapper<T>::Type &&)> &&func) {
     state_->then_ = std::move(func);

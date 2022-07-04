@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package lrpc;
+
+option cc_generic_services = true;
+
+enum MessageType {
+  HEARTBEAT_PACKET = 0;               // RPC 心跳
+  RPC_SERVICE_REGISTER = 1;           // 服务注册消息
+  RPC_SERVICE_REGISTER_RESPONSE = 2;  // 服务注册回复
+  RPC_SERVICE_DISCOVER = 3;           // 服务发现消息
+  RPC_SERVICE_DISCOVER_RESPONSE = 4;  // 服务发现回复
+  RPC_METHOD_REQUEST = 5;             // RPC 请求
+  RPC_METHOD_RESPONSE = 6;            // RPC 回复
+}
+
+message Request {
+  int32 id = 1;
+  string service_name = 2;
+  string method_name = 3;
+  bytes serialized_request = 4;
+}
+
+message Error {
+  int32 errnum = 1;
+  string msg = 2;
+}
+
+message Response {
+  int32 id = 1;
+  oneof Body {
+    bytes serialized_response = 2;
+    Error error = 3;
+  }
+}
+
+message RpcMessage {
+  oneof Body {
+    Request request = 1;
+    Response response = 2;
+  }
+}
+
+message Endpoint {
+  // Proto proto = 1;
+  string ip = 1;
+  int32 port = 2;
+}
+
+message EndpointList {
+  repeated Endpoint endpoints = 1;
+}
+
+message KeepaliveInfo {
+  string serviceName = 1;
+  Endpoint endpoint = 2;
+}
+
+message ServiceName {
+  string name = 1;
+}
+
+message Status {
+  int32 result = 1;
+}
+
+service NameService {
+  rpc GetEndpoints(ServiceName) returns(EndpointList) {}
+  rpc Keepalive(KeepaliveInfo) returns(Status) {}
+}

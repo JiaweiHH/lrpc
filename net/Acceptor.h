@@ -14,7 +14,7 @@ class InetAddress;
 /// Channel belongs Socket -> wait socket readable event -> call
 /// Acceptor::handleRead()
 /// -> call accept(2) and call user's functionCallback
-class Acceptor {
+class Acceptor : public std::enable_shared_from_this<Acceptor> {
 public:
   using NewConnectionCallback = std::function<void(int, const InetAddress &)>;
   Acceptor(const Acceptor &) = delete;

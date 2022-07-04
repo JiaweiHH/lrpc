@@ -48,7 +48,7 @@ const char *LogLevelName[Logger::NUM_LOG_LEVELS] = {
 
 void defaultOutput(const char *msg, int len) {
   // fwrite 将 msg 重新解释为一个个大小为 1 字节的 object，写入到 stdout 中
-  size_t n = fwrite(msg, 1, len, stdout);
+  fwrite(msg, 1, len, stdout);
 }
 
 void defaultFlush() {

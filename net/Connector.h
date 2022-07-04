@@ -13,7 +13,7 @@ class Channel;
 class EventLoop;
 
 /// Connector 只负责建立 socket 连接，不负责创建 TcpConnection
-class Connector {
+class Connector : public std::enable_shared_from_this<Connector> {
 public:
   using NewConnectionCallback = std::function<void(int sockfd)>;
 

@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sun Jun 12 01:05:42 2022
+# Make data base, printed on Mon Jul  4 05:55:58 2022
 
 # Variables
 
@@ -25,7 +25,7 @@ VSCODE_LOG_NATIVE = false
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-PLATFORMIO_IDE = 2.4.3
+PLATFORMIO_IDE = 2.5.0
 # automatic
 @D = $(patsubst %/,%,$(dir $@))
 # automatic
@@ -37,9 +37,9 @@ CURDIR := /home/parallels/Desktop/lrpc
 # makefile
 SHELL = /bin/sh
 # environment
-VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"2d459c3c1e4312b6770e21efe80cc342.zh-cn","_translationsConfigFile":"/home/parallels/.vscode-server/data/clp/2d459c3c1e4312b6770e21efe80cc342.zh-cn/tcf.json","_cacheRoot":"/home/parallels/.vscode-server/data/clp/2d459c3c1e4312b6770e21efe80cc342.zh-cn","_resolvedLanguagePackCoreLocation":"/home/parallels/.vscode-server/data/clp/2d459c3c1e4312b6770e21efe80cc342.zh-cn/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5","_corruptedFile":"/home/parallels/.vscode-server/data/clp/2d459c3c1e4312b6770e21efe80cc342.zh-cn/corrupted.info","_languagePackSupport":true}
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{"*":"zh-cn"},"_languagePackId":"bbca1a7059cee8a1b93da8947fee1c4f.zh-cn","_translationsConfigFile":"/home/parallels/.vscode-server/data/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/tcf.json","_cacheRoot":"/home/parallels/.vscode-server/data/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn","_resolvedLanguagePackCoreLocation":"/home/parallels/.vscode-server/data/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/30d9c6cd9483b2cc586687151bcbcd635f373630","_corruptedFile":"/home/parallels/.vscode-server/data/clp/bbca1a7059cee8a1b93da8947fee1c4f.zh-cn/corrupted.info","_languagePackSupport":true}
 # environment
-_ = /home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/node
+_ = /home/parallels/.vscode-server/bin/30d9c6cd9483b2cc586687151bcbcd635f373630/node
 # makefile
 MAKEFILE_LIST := 
 # 'override' directive
@@ -55,7 +55,7 @@ LESSOPEN = | /usr/bin/lesspipe %s
 # environment
 VSCODE_CWD = /home/parallels
 # environment
-SSH_CONNECTION = 10.211.55.2 65263 10.211.55.4 22
+SSH_CONNECTION = 10.211.55.2 57405 10.211.55.4 22
 # environment
 NO_PROXY = 127.0.0.1
 # environment
@@ -75,7 +75,7 @@ VSCODE_PIPE_LOGGING = true
 # environment
 PWD = /home/parallels/Desktop/lrpc
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-436c7448-8f67-43fc-b2bc-b643ecea3cab.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-cb07382a-dc11-4a55-9ec2-04270fde9661.sock
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -97,17 +97,17 @@ VSCODE_HANDLES_UNCAUGHT_ERRORS = true
 # environment
 MAKELEVEL := 0
 # environment
-PLATFORMIO_PATH = /home/parallels/.platformio/penv/bin:/home/parallels/.platformio/penv:/home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+PLATFORMIO_PATH = /home/parallels/.platformio/penv/bin:/home/parallels/.platformio/penv:/home/parallels/.platformio/python3/bin:/home/parallels/.vscode-server/bin/30d9c6cd9483b2cc586687151bcbcd635f373630/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 # default
 MAKE = $(MAKE_COMMAND)
 # default
 MAKECMDGOALS := all
 # environment
-PATH = /home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+PATH = /home/parallels/.vscode-server/bin/30d9c6cd9483b2cc586687151bcbcd635f373630/bin/remote-cli:/home/parallels/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
 # environment
 SHLVL = 3
 # environment
-XDG_SESSION_ID = 5
+XDG_SESSION_ID = 4
 # environment
 USER = parallels
 # makefile
@@ -118,8 +118,6 @@ LIBVIRT_DEFAULT_URI = qemu:///system
 %D = $(patsubst %/,%,$(dir $%))
 # default
 MAKE_COMMAND := make
-# environment
-OLDPWD = /home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5
 # default
 .VARIABLES := 
 # automatic
@@ -129,13 +127,13 @@ MAKEFLAGS = pqrR
 # environment
 MFLAGS = -pqrR
 # environment
-SSH_CLIENT = 10.211.55.2 65263 22
+SSH_CLIENT = 10.211.55.2 57405 22
 # environment
 MAIL = /var/mail/parallels
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
 # environment
-BROWSER = /home/parallels/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/helpers/browser.sh
+BROWSER = /home/parallels/.vscode-server/bin/30d9c6cd9483b2cc586687151bcbcd635f373630/bin/helpers/browser.sh
 # environment
 S_COLORS = auto
 # environment
@@ -167,7 +165,7 @@ LANG = C
 # environment
 VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 # variable set hash-table stats:
-# Load=77/1024=8%, Rehash=0, Collisions=9/99=9%
+# Load=76/1024=7%, Rehash=0, Collisions=9/98=9%
 
 # Pattern-specific Variable Values
 
@@ -175,9 +173,9 @@ VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 
 # Directories
 
-# . (device 2049, inode 2501063): 11 files, no impossibilities.
+# . (device 2049, inode 2501063): 12 files, no impossibilities.
 
-# 11 files, no impossibilities in 1 directories.
+# 12 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -227,12 +225,12 @@ GNUmakefile:
 
 # No general ('VPATH' variable) search path.
 
-# strcache buffers: 1 (0) / strings = 19 / storage = 146 B / avg = 7 B
-# current buf: size = 8162 B / used = 146 B / count = 19 / avg = 7 B
+# strcache buffers: 1 (0) / strings = 20 / storage = 147 B / avg = 7 B
+# current buf: size = 8162 B / used = 147 B / count = 20 / avg = 7 B
 
-# strcache performance: lookups = 22 / hit rate = 13%
+# strcache performance: lookups = 23 / hit rate = 13%
 # hash-table stats:
-# Load=19/8192=0%, Rehash=0, Collisions=1/22=5%
-# Finished Make data base on Sun Jun 12 01:05:42 2022
+# Load=20/8192=0%, Rehash=0, Collisions=1/23=4%
+# Finished Make data base on Mon Jul  4 05:55:58 2022
 
  

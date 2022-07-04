@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package lrpc.test;
+
+option cc_generic_services = true;
+
+// sample
+message EchoRequest {
+    string text = 1;
+}
+message EchoResponse {
+    string text = 1;
+}
+
+service TestService { 
+    rpc Echo(EchoRequest) returns(EchoResponse) {
+    }  
+    rpc ToUpper(EchoRequest) returns(EchoResponse) {
+    }  
+    rpc AppendDots(EchoRequest) returns(EchoResponse) {
+    }
+}
+

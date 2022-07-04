@@ -15,6 +15,8 @@ using namespace lrpc::net;
 
 // thread_local 变量记录当前线程的 EventLoop
 thread_local EventLoop *t_loopInThisThread = 0;
+thread_local unsigned int EventLoop::s_id = 0;
+std::atomic<int> EventLoop::sequenceId{0};
 // IO mutilplexing 超时时间
 const int kPollTimeMs = 10000;
 
@@ -49,6 +51,7 @@ EventLoop::EventLoop()
   } else {
     t_loopInThisThread = this;
   }
+  local_id_ = sequenceId++;
   wakeChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));
   wakeChannel_->enableReading();
 }

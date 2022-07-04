@@ -27,7 +27,8 @@ public:
   EventLoopThreadPool(EventLoop *baseLoop);
   ~EventLoopThreadPool();
 
-  void setThraedNum(int numThraeds) { numThreads_ = numThraeds; }
+  EventLoop *baseLoop() { return baseLoop_; }
+  void setThreadNum(int numThraeds) { numThreads_ = numThraeds; }
   void start();
   EventLoop *getNextLoop();
 };

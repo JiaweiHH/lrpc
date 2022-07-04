@@ -21,6 +21,7 @@ SA *sockaddr_cast(struct sockaddr_in *addr) {
   return reinterpret_cast<SA *>(addr);
 }
 
+#if VALGRIND
 void setNonBlockAndCloseOnExec(int sockfd) {
   // set non-block
   int flags = ::fcntl(sockfd, F_GETFL, 0);
@@ -32,6 +33,7 @@ void setNonBlockAndCloseOnExec(int sockfd) {
   flags |= FD_CLOEXEC;
   ::fcntl(sockfd, F_SETFD, flags);
 }
+#endif
 
 } // namespace
 

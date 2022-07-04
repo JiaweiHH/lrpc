@@ -3,6 +3,7 @@
 
 #include "Buffer.h"
 #include "Callback.h"
+#include "EventLoop.h"
 #include "InetAddress.h"
 #include <memory>
 #include <string>
@@ -49,6 +50,9 @@ private:
   Buffer inputBuffer_;
   Buffer outputBuffer_;
 
+  std::shared_ptr<void> context_; // 保存 RpcChannel
+  unsigned int uniqueId_;
+
 public:
   TcpConnection(const TcpConnection &) = delete;
   TcpConnection &operator=(const TcpConnection &) = delete;
@@ -64,7 +68,8 @@ public:
   bool connected() const { return state_ == StateE::kConnected; }
 
   /// 这两个函数都是线程安全的
-  void send(const std::string &message);
+  bool send(const std::string &message);
+  bool send(Buffer &message);
   void shutdown();
   void setTcpNoDelay(bool on); // 禁用 Nagle 算法，避免连续发包出现延迟
 
@@ -82,7 +87,26 @@ public:
   void connectDestoryed();  // 连接断开
 
   std::string stateEnumToStr(StateE state);
+
+  void setContext(std::shared_ptr<void> user) { context_ = std::move(user); }
+  template <typename T> std::shared_ptr<T> getContext() const;
+  std::shared_ptr<void> getContext() { return context_; }
+
+  // void setUniqueId(unsigned int id) { uniqueId_ = id; }
+  // lazy 赋值，只会在 base loop 被调用
+  unsigned int getUniqueId() {
+    if (uniqueId_ != 0)
+      return uniqueId_;
+    // assert(loop_->isInLoopThread());
+    uniqueId_ = loop_->getConnectionId();
+    return uniqueId_;
+  }
 };
+
+template <typename T>
+inline std::shared_ptr<T> TcpConnection::getContext() const {
+  return std::static_pointer_cast<T>(context_);
+}
 
 } // namespace net
 } // namespace lrpc
