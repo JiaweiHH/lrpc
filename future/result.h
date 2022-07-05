@@ -18,7 +18,7 @@ public:
 
   /// @brief 普通构造函数
   Result() : state_(State::None) {}
-  Result(const T &val) : state_(State::None), value_(val) {}
+  Result(const T &val) : state_(State::Value), value_(val) {}
   Result(T &&val) : state_(State::Value), value_(std::move(val)) {}
   Result(std::exception_ptr e)
       : state_(State::Exception), exception_(std::move(e)) {}

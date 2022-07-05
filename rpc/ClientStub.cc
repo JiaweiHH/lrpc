@@ -79,10 +79,13 @@ Future<ClientStub::EndpointsPtr> ClientStub::_getEndpoints() {
 
   std::unique_lock<std::mutex> lk(endpointsMutex_);
   if (endpoints_ && !endpoints_->empty()) {
+    LOG_INFO << std::this_thread::get_id() << " endpoints is not empty";
     auto now = Timestamp::now();
     // endpoints_ 是最近 60s 时间内缓存的，则继续使用
-    if (timeDifference(now, refreshTime_) < 60)
+    if (timeDifference(now, refreshTime_) < 60) {
+      LOG_INFO << "is in 60s";
       return makeReadyFuture(endpoints_);
+    }
     else
       refreshTime_ = now;
   }
@@ -135,7 +138,7 @@ void ClientStub::_onNewEndpointList(Result<EndpointList> &&endpoints) {
   try {
     // 从 nameserver 返回的 endpoints 中提取 endpoint 到 ClientStub
     EndpointList eps = std::move(endpoints);
-    LOG_DEBUG << "From nameserver, GetEndpoints got: " << eps.DebugString();
+    LOG_DEBUG << "From nameserver, GetEndpoints got: " << eps.DebugString() << ", " << std::this_thread::get_id();
     auto newEndpoints = std::make_shared<std::vector<Endpoint>>();
     for (int i = 0; i < eps.endpoints_size(); ++i) {
       const auto &e = eps.endpoints(i);
@@ -143,6 +146,7 @@ void ClientStub::_onNewEndpointList(Result<EndpointList> &&endpoints) {
     }
     {
       // 更新 ClientStub 的 endpoints_
+      LOG_INFO << "----------- update endpoints -----------, " << eps.endpoints_size();
       std::lock_guard<std::mutex> lk(endpointsMutex_);
       this->endpoints_ = newEndpoints;
     }
@@ -180,6 +184,7 @@ Future<ClientChannel *> ClientStub::_selectChannel(EventLoop *loop,
 /// 等待连接建立成功，ClientChannel 被创建好
 Future<ClientChannel *> ClientStub::_makeChannel(EventLoop *loop,
                                                  const Endpoint &ep) {
+  LOG_INFO << "make channel";
   assert(loop->isInLoopThread());
   // service 没有 endpoint，返回一个异常 future
   if (!isValidEndpoint(ep))
@@ -193,6 +198,7 @@ Future<ClientChannel *> ClientStub::_makeChannel(EventLoop *loop,
   if (it != channels.end()) {
     return makeReadyFuture(it->second.get());
   }
+  LOG_INFO << std::this_thread::get_id() << ", need connect";
   return _connect(loop, ep);
 }
 

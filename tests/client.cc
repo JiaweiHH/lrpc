@@ -17,8 +17,8 @@ using namespace lrpc::net;
 using namespace lrpc::util;
 
 Timestamp start, end;
-const static int LOOP = 100000;
-thread_local int count = 0;
+int newCount = 0;
+const int totalCount = 200 * 10000;
 
 std::shared_ptr<lrpc::test::EchoRequest> req;
 const char *g_text = "hello lrpc";
@@ -30,24 +30,20 @@ void onResponse(lrpc::Result<lrpc::test::EchoResponse> &&response) {
   try {
     lrpc::test::EchoResponse resp = std::move(response);
     // LOG_INFO << "recieve: " << resp.text();
-    ++count;
-    if (count < LOOP)
-      call<lrpc::test::EchoResponse>("lrpc.test.TestService", "AppendDots", req);
-    // if (count == LOOP) {
-    //   end = Timestamp::now();
-    //   LOG_DEBUG << "done onResponse avg "
-    //             << (LOOP * 0.1f / (timeDifference(start, end))) << " W/s";
-    // } else if (count < LOOP) {
-    //   call<lrpc::test::EchoResponse>("lrpc.test.TestService", "AppendDots",
-    //   req,
-    //                                  createEndpoint("127.0.0.1:9987"))
-    //       .then(onResponse);
-    // }
-    // if (count % 50000 == 0) {
-    //   end = Timestamp::now();
-    //   LOG_INFO << "onResponse avg "
-    //            << (count * 0.1f / (timeDifference(start, end))) << " W/s";
-    // }
+    ++newCount;
+    if (newCount == totalCount) {
+      end = Timestamp::now();
+      LOG_DEBUG << "done onResponse avg "
+                << (totalCount * 0.1f / (timeDifference(end, start))) << " W/s";
+    } else if (newCount < totalCount) {
+      call<lrpc::test::EchoResponse>("lrpc.test.TestService", "AppendDots", req)
+          .then(onResponse);
+    }
+    if (newCount % 50000 == 0) {
+      end = Timestamp::now();
+      LOG_INFO << "onResponse avg "
+               << (newCount * 0.1f / (timeDifference(end, start))) << " W/s";
+    }
   } catch (const std::system_error &exp) {
     assert(exp.code().category() == lrpc::lrpcCategory());
     int errcode = exp.code().value();
@@ -58,7 +54,7 @@ void onResponse(lrpc::Result<lrpc::test::EchoResponse> &&response) {
 }
 
 int main() {
-  int threads = std::thread::hardware_concurrency() - 1;
+  int threads = 1;
   auto testStub = new ClientStub(new lrpc::test::TestService_Stub(nullptr));
   testStub->setOnCreateChannel(onCreateChannel);
 
@@ -73,21 +69,11 @@ int main() {
   auto starter = [&]() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     start = Timestamp::now();
-    auto thread_func = [&]() {
+    for (int i = 0; i < threads; ++i) {
       call<lrpc::test::EchoResponse>("lrpc.test.TestService", "AppendDots", req)
           .then(onResponse);
     };
-    std::vector<std::thread> clients;
-    for (int i = 0; i < threads; ++i)
-      clients.emplace_back(thread_func);
-    for (int i = 0; i < threads; ++i)
-      clients[i].join();
-    Timestamp end = Timestamp::now();
-    LOG_INFO << "onResponse avg "
-             << (100000 * threads / (timeDifference(start, end))) << " W/s";
   };
-
-  std::cout << std::this_thread::get_id() << "\n";
 
   std::thread t(starter);
   client.startClient();

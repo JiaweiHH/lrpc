@@ -129,7 +129,6 @@ Future<Result<R>> call(const std::string &service, const std::string &method,
 }
 /// @brief rpc call 接口重载，区别在于这里的 req 是原始 request 的引用
 /// 因此需要制作一份拷贝
-/// TODO 为啥需要拷贝一份？
 template <typename R>
 Future<Result<R>> call(const std::string &service, const std::string &method,
                        const Message &req,

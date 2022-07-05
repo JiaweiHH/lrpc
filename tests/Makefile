@@ -1,4 +1,4 @@
-BINARIES = test_client test_server
+BINARIES = test_client test_server test_future
 LIB_SRC = ../net/Channel.cc ../net/EventLoop.cc ../net/Poller.cc ../net/Timer.cc ../net/TimerQueue.cc ../net/EventLoopThread.cc \
 ../net/SocketsOps.cc ../net/Socket.cc ../net/InetAddress.cc ../net/Acceptor.cc ../net/TcpConnection.cc ../net/EventLoopThreadPool.cc \
 ../net/TcpServer.cc ../net/TcpClient.cc ../util/Buffer.cc ../util/Timestamp.cc ../net/Connector.cc ../util/LogFile.cc ../util/LogStream.cc ../util/Logging.cc \

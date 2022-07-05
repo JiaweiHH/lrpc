@@ -37,6 +37,7 @@ bool RedisClientContext::M2FEncode(const google::protobuf::Message *msg,
     *result = "hset " + req->servicename() + " " +
               getAddrFromEndpoint(req->endpoint()).toHostPort() + " " +
               std::to_string(time(nullptr));
+    LOG_INFO << *result;
     operates_.push(Oper::KEEPALIVE);
   }
 
